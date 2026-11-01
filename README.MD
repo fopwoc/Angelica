@@ -23,5 +23,4 @@ What lives here:
 The original root Minecraft build and the other modules are not maintained here. The host owns the window, its
 thread and its event loop, and hands the renderer what it needs through the renderer's APIs.
 
-The `pz` branch merges [GTNewHorizons/Angelica](https://github.com/GTNewHorizons/Angelica) periodically. Original
-source notices and the [LGPL v3 license](LICENSE) remain in force.
+Original source notices and the [LGPL v3 license](LICENSE) remain in force.
