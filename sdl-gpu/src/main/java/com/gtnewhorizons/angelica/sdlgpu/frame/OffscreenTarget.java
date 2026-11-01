@@ -52,10 +52,6 @@ public final class OffscreenTarget {
     public boolean hasContent() { return hasContent; }
     public void markContent() { hasContent = true; }
 
-    public boolean isFor(ContextState st) {
-        return fboGlId != 0 && st.defaultFboId == fboGlId;
-    }
-
     public void destroy(ResourceManager rm) {
         if (fboGlId != 0) {
             rm.deleteFbo(fboGlId);

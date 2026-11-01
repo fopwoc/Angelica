@@ -122,20 +122,6 @@ class PresenterTest {
     }
 
     @Test
-    void theSplashPresentGoesThroughTheWindowThreadToo() {
-        final DeferredExecutor executor = new DeferredExecutor();
-        final FrameManager fm = new FrameManager(new Device());
-        fm.setPresenter(new Presenter(fm, executor, noPump()));
-        fm.frame();
-        final int before = fm.registeredFrameCount();
-
-        fm.presentSplash(1L, 10, 10);
-
-        assertEquals(1, executor.tasks.size(), "the splash blit must be enqueued on the window thread");
-        assertEquals(before, fm.registeredFrameCount(), "the splash present must not touch the calling thread's frame");
-    }
-
-    @Test
     void tryRequestDropsWithoutBlockingWhileAPresentIsPending() {
         final DeferredExecutor executor = new DeferredExecutor();
         final Presenter p = presenter(executor);

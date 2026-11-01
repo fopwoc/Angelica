@@ -135,8 +135,6 @@ public class GLSMRedirector {
     private static final String GL_PREFIX = "org/lwjgl/opengl/GL";
     private static final String ARBVertexArrayObject = "org/lwjgl/opengl/ARBVertexArrayObject";
     private static final String APPLEVertexArrayObject = "org/lwjgl/opengl/APPLEVertexArrayObject";
-    private static final String Project = "org/lwjgl/util/glu/Project";
-    private static final String GLU = "org/lwjgl/util/glu/GLU";
     private static final String OpenGlHelper = "net/minecraft/client/renderer/OpenGlHelper";
     private static final String EXTBlendFunc = "org/lwjgl/opengl/EXTBlendFuncSeparate";
     private static final String EXTSecondaryColor = "org/lwjgl/opengl/EXTSecondaryColor";
@@ -873,24 +871,6 @@ public class GLSMRedirector {
             .add("bindVertexArray", "glBindVertexArray")
             .add("deleteVertexArrays", "glDeleteVertexArrays")
         );
-
-        // GLU
-        methodRedirects.put(Project, RedirectMap.newMap()
-            .add("gluPerspective")
-            .add("gluLookAt")
-            .add("gluPickMatrix")
-            .add("gluUnProject")
-        );
-        methodRedirects.put(GLU, RedirectMap.newMap()
-            .add("gluPerspective")
-            .add("gluLookAt")
-            .add("gluOrtho2D")
-            .add("gluPickMatrix")
-            .add("gluBuild2DMipmaps")
-            .add("gluErrorString")
-        );
-        // Must honor disableErrorChecks like glGetError, or it throws on errors those checks left latched
-        methodRedirects.put("org/lwjgl/opengl/Util", RedirectMap.newMap().add("checkGLError"));
 
         final List<String> stringsToSearch = new ArrayList<>(32);
         stringsToSearch.add(LWJGL_GL_PACKAGE);

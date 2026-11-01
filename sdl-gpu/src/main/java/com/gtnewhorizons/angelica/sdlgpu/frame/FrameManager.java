@@ -945,20 +945,16 @@ public final class FrameManager {
     public void presentFinalTarget() {
         if (BackendManager.RENDER_BACKEND.isPresentSuppressed()) return;
         if (!finalTarget.hasContent()) return;
-        present(finalTarget.colorTexture(), finalTarget.width(), finalTarget.height(), SDL_FLIP_NONE, false);
+        present(finalTarget.colorTexture(), finalTarget.width(), finalTarget.height(), SDL_FLIP_NONE);
     }
 
-    public void presentSplash(long srcTexture, int srcW, int srcH) {
-        present(srcTexture, srcW, srcH, SDL_FLIP_VERTICAL, true);
-    }
-
-    private void present(long srcTexture, int srcW, int srcH, int flipMode, boolean splash) {
+    private void present(long srcTexture, int srcW, int srcH, int flipMode) {
         final FrameState f = frame();
         if (f.presentedThisFrame) return;
         final Presenter p = presenter;
         if (p != null) {
             f.presentedThisFrame = true;
-            if (!splash && BackendManager.RENDER_BACKEND.getEffectiveVSyncMode() == VSyncMode.OFF) {
+            if (BackendManager.RENDER_BACKEND.getEffectiveVSyncMode() == VSyncMode.OFF) {
                 if (!p.tryRequestPresent(srcTexture, srcW, srcH, flipMode)) notePresentSkip(f);
             } else {
                 p.requestPresent(srcTexture, srcW, srcH, flipMode);
@@ -966,7 +962,6 @@ public final class FrameManager {
         } else {
             presentBlit(f, srcTexture, srcW, srcH, flipMode);
         }
-        if (splash) f.presentedThisFrame = false;
     }
 
     private final AtomicLong windowAcquireWaitNanos = new AtomicLong();

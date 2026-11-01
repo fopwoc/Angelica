@@ -64,8 +64,6 @@ import com.gtnewhorizons.angelica.sdlgpu.sampler.StorageBufferBinder;
 import com.gtnewhorizons.angelica.sdlgpu.sampler.StorageTextureBinder;
 import com.gtnewhorizons.angelica.sdlgpu.shader.SamplerOverflow;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
-import com.gtnewhorizons.angelica.sdlgpu.splash.SplashDispatcher;
-import com.gtnewhorizons.angelica.sdlgpu.frame.OffscreenTarget;
 import com.gtnewhorizons.angelica.sdlgpu.util.DebugLabels;
 import com.gtnewhorizons.angelica.sdlgpu.util.DebugMessageRelay;
 import com.gtnewhorizons.angelica.sdlgpu.util.ThreadRegistry;
@@ -203,9 +201,6 @@ public class SDLGPURenderBackend extends RenderBackend {
     private TransferThread transferThread;
 
     private volatile boolean shutdown;
-
-    private volatile OffscreenTarget splashTarget;
-    private volatile boolean splashTeardownPending;
 
     private static final ThreadRegistry<ContextState> registeredStates = new ThreadRegistry<>(new ContextState[0]);
     private static final ThreadLocal<ContextState> tlState = new ThreadLocal<>();
@@ -485,11 +480,6 @@ public class SDLGPURenderBackend extends RenderBackend {
         shutdown = true;
         if (presenter != null) presenter.drain();
         frameManager.destroyFinalTarget();
-        if (splashTarget != null) {
-            splashTarget.destroy(resourceManager);
-            splashTarget = null;
-        }
-        SplashDispatcher.reset();
         final long dev = device.getDevice();
         if (transferThread != null) {
             transferThread.shutdown();
@@ -593,49 +583,13 @@ public class SDLGPURenderBackend extends RenderBackend {
         }
     }
 
-    private void beginSplashFrame() {
-        frameManager.beginFrame();
-        beginFrameInit();
-        frameManager.frame().swapchainUnavailable = true;
-    }
-
     @Override public boolean handleSwapBuffers() {
-        final OffscreenTarget splash = splashTarget;
-        if (splash != null && splash.isFor(s()) && Thread.currentThread() != GLStateManager.getMainThread()) {
-            if (frameManager.isFrameActive()) fboClearTracker.materializeAllPendingClears(s());
-            endFrameUploadFlush();
-            frameManager.endFrame();
-            SplashDispatcher.signalFrameReady((int) s().viewportW, (int) s().viewportH);
-            beginSplashFrame();
-            return true;
-        }
         frameManager.presentFrame();
         return true;
     }
 
-    public void dispatchSplashBlit(OffscreenTarget target) {
-        if (shutdown || target == null) return;
-        final long drawnSize = SplashDispatcher.getDrawnSize();
-        final int srcW = Math.max(1, Math.min((int) (drawnSize >> 32), target.width()));
-        final int srcH = Math.max(1, Math.min((int) drawnSize, target.height()));
-        frameManager.presentSplash(target.colorTexture(), srcW, srcH);
-    }
-
-    private void finishSplash() {
-        splashTeardownPending = false;
-        final OffscreenTarget target = splashTarget;
-        if (target == null) return;
-        SplashDispatcher.signalFrameReady();
-        SplashDispatcher.tryDispatch(this, target, true);
-        if (presenter != null) presenter.drain();
-        splashTarget = null;
-        target.destroy(resourceManager);
-        SplashDispatcher.reset();
-    }
-
     @Override public void onFrameBegin() {
         if (shutdown) return;
-        if (splashTeardownPending) finishSplash();
         if (GLStateManager.isSplashComplete()) applyPendingVSync();
         final boolean wasActive = frameManager.isFrameActive();
         frameManager.beginFrame();

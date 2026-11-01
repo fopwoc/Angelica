@@ -64,9 +64,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `FragmentShaderGenerator`, `FullscreenPass`: `ShaderSources` instead of Embeddium's `ShaderLoader`.
 - `Device`: reads the application's window through `WindowSource` (`setWindowSource`) instead of LWJGL2's `Display`.
   The window itself, its borrowing and its event loop belong to Julia.
-- `SDLGPURenderBackend.init`: creates no splash target, and the loading-checkpoint listener only flushes. The rest of
-  the Minecraft splash path (`SplashDispatcher`, `OffscreenTarget`, the splash branches) stays in place but never
-  runs.
+- `SDLGPURenderBackend.init`: the loading-checkpoint listener only flushes. Startup-complete state still controls
+  synchronization; Minecraft's separate splash renderer is removed. `OffscreenTarget` remains the final frame target.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
   capability shim in `onPostWindowCreate` (including offscreen windows), before GLSM pre-initialization reads it.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.
@@ -129,3 +128,6 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `MainThreadPump.pollInput`, glsm's Minecraft stubs (`glsm/src/stubs`), and the `KHRDebugCallback` overload of
   `glDebugMessageCallback`.
 - `README_uk.MD`, upstream's Minecraft mod README; `README.MD` describes this fork.
+- Minecraft splash presentation: `SplashDispatcher`, its backend target/dispatch/teardown branches,
+  `FrameManager.presentSplash`, and their splash-only tests. Normal offscreen presentation remains.
+- LWJGL2-only `GLU`, `Project`, and `Util.checkGLError` redirector entries; LWJGL3 does not expose those classes.
