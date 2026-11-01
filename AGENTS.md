@@ -70,6 +70,10 @@ Keep this list current. One line per hook: file, what it calls, and why.
   sparse targets natively; `PipelineApplier.ensureRenderPass` validates the draw, skips the dummy color target for
   absent outputs, and begins through the slice-aware path; `FboState.recomputeTargets` records the slice layout;
   `FBOClearTracker` compares slices and always rebuilds the pipeline color formats.
+- Vertex inputs through `VertexInputs` (owned): `PipelineCache` mixes full-width divisors into `computeInputHash`,
+  creates pipelines natively, and types disabled attributes from the generic value; `VertexWriteReplayer` clamps
+  replay divisors through it. `RenderBackend.preservesVertexLayout` (new, default `false`) stops
+  `GLSMVertexInput.pointAttrib` from repairing layouts `VertexLayer` owns.
 
 ## Deleted on `pz`
 

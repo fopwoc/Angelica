@@ -180,6 +180,7 @@ public final class GLSMVertexInput {
     }
 
     static void pointAttrib(GLContextState glCtx, int index) {
+        if (RENDER_BACKEND.preservesVertexLayout(index)) return;
         final VAOManager vaos = glCtx.vaos;
         final VAOManager.Attrib a = vaos.attrib(index);
         if (a == null) return;

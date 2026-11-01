@@ -534,6 +534,8 @@ public abstract class RenderBackend {
     public boolean cachesColorMask() { return true; }
     /** Whether GLSM may skip a global blend equation equal to its cache; false while outputs differ per index. */
     public boolean cachesBlendEquation() { return true; }
+    /** Whether GLSM must leave this attribute's layout alone instead of repairing it from legacy pointer state. */
+    public boolean preservesVertexLayout(int attribute) { return false; }
 
     public abstract void uniform1i(int location, int v0);
     public abstract void uniform1f(int location, float v0);

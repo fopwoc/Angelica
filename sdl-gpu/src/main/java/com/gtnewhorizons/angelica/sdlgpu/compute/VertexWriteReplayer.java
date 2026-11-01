@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.compute;
 
+import com.gtnewhorizons.angelica.sdlgpu.vertex.VertexInputs;
 import com.gtnewhorizons.angelica.glsm.backend.VertexWriteReplaySetup;
 import com.gtnewhorizons.angelica.sdlgpu.SDLGPURenderBackend;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -354,7 +355,7 @@ public final class VertexWriteReplayer {
                         final int elementBytes = type >= FIRST_PACKED_TYPE ? 4 : size * COMPONENT_SIZE[type];
                         final int stride = vao.bindingStride[binding] != 0 ? vao.bindingStride[binding] : elementBytes;
                         final long offset = vao.bindingOffset[binding] + vao.attribRelativeOffset[loc];
-                        final int divisor = Math.min(vao.bindingDivisor[binding], MAX_DIVISOR);
+                        final int divisor = VertexInputs.replayDivisor(vao.bindingDivisor[binding], MAX_DIVISOR);
                         final long bufferSize = resourceManager.getBufferSize(buffer);
                         final boolean noElement = bufferSize > 0 && bufferSize < offset + elementBytes;
                         x = slot | type << 4 | size << 8 | (vao.attribNormalized[loc] ? 0x800 : 0) | (vao.attribIsInteger[loc] ? 0x1000 : 0)

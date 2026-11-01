@@ -11,6 +11,11 @@ import com.gtnewhorizons.angelica.sdlgpu.vertex.VertexInputs;
 /** Vertex attribute layout, full-width divisors, and base-instance offsets for instanced draws. */
 public abstract class VertexLayer extends QueryLayer {
     @Override
+    public boolean preservesVertexLayout(int attribute) {
+        return VertexInputs.preserveLayout(attribute);
+    }
+
+    @Override
     public void drawArraysInstanced(int mode, int first, int count, int instances) {
         if (count <= 0 || instances <= 0) return;
         try (var _ = BaseInstanceDraws.offsets(Upstream.context())) {

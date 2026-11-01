@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.vertex.VertexInputs;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.BlendEquationHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.ColorMaskHooks;
@@ -412,7 +413,7 @@ public final class PipelineCache {
 
     private long computeInputHash(PipelineStore store, ContextState cs) {
         if (cs == null) {
-            return Hashing.fmix64(INPUT_SEED, Hashing.packHiLo(shaderInputMask, maxAttribs));
+            return VertexInputs.pipelineHash(Hashing.fmix64(INPUT_SEED, Hashing.packHiLo(shaderInputMask, maxAttribs)), cs);
         }
         final ContextState.VAOState vao = cs.currentVao;
         final int livenessGen = store.livenessGen();
@@ -426,7 +427,7 @@ public final class PipelineCache {
             if (id == 0) continue;
             if (id == shaderInputSetId && vao.slotEnabledMask[s] == enabledMask && vao.slotMaxAttribs[s] == maxAttribs) {
                 if (Tracy.ENABLED) inputHashHits++;
-                return vao.slotHash[s];
+                return VertexInputs.pipelineHash(vao.slotHash[s], cs);
             }
         }
         inputHashLoopRuns++;
@@ -465,7 +466,7 @@ public final class PipelineCache {
         vao.slotMaxAttribs[slot] = maxAttribs;
         vao.slotHash[slot] = h;
         vao.slotCursor = (slot + 1) % ContextState.VAOState.INPUT_HASH_SLOTS;
-        return h;
+        return VertexInputs.pipelineHash(h, cs);
     }
 
     private static final LongOpenHashSet loggedUnconsumedFragOutput = new LongOpenHashSet();
@@ -573,7 +574,7 @@ public final class PipelineCache {
                 .target_info(targetInfo)
                 .vertex_input_state(vertexInput);
 
-            final long pipeline = SDL_CreateGPUGraphicsPipeline(store.device().getDevice(), ci);
+            final long pipeline = VertexInputs.createPipeline(store.device().getDevice(), ci);
             if (pipeline == 0) {
                 final int diagInputMask = computeInputMask();
                 logPipelineCreateFailure(cs, diagInputMask, Integer.bitCount(diagInputMask), depthOn, stencilOn);
@@ -975,7 +976,8 @@ public final class PipelineCache {
                     .input_rate(SDL_GPU_VERTEXINPUTRATE_INSTANCE).instance_step_rate(0);
                 attrs.get(i)
                     .location(i).buffer_slot(i)
-                    .format(mapVertexFormat(vecSize, GL11.GL_FLOAT, false, false))
+                    // Disabled attributes read the generic value, whose type may be integer.
+                    .format(VertexInputs.defaultFormat(vecSize, this, i))
                     .offset(0);
             }
         }
