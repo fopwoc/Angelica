@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.sampler;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.device.Device;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -91,13 +92,13 @@ public final class MovedSamplerCopies {
 
     private static boolean bindingsMatch(ContextState st, int[] units, int[] textures) {
         for (int i = 0; i < units.length; i++) {
-            if (textures[i] != st.boundTexture(units[i])) return false;
+            if (textures[i] != BufferTextureHooks.samplerBinding(st, units[i])) return false;
         }
         return true;
     }
 
     private static void snapshotBindings(ContextState st, int[] units, int[] textures) {
-        for (int i = 0; i < units.length; i++) textures[i] = st.boundTexture(units[i]);
+        for (int i = 0; i < units.length; i++) textures[i] = BufferTextureHooks.samplerBinding(st, units[i]);
     }
 
     private boolean refresh(ContextState st, FrameState f, int[] vertexUnits, int[] fragmentUnits, boolean keepsOpenPass) {
@@ -120,7 +121,7 @@ public final class MovedSamplerCopies {
 
     private void collectStale(ContextState st, FrameState f, int[] units, boolean keepsOpenPass) {
         for (int unit : units) {
-            final int glTexId = st.boundTexture(unit);
+            final int glTexId = BufferTextureHooks.samplerBinding(st, unit);
             if (glTexId == 0) continue;
             final ResourceManager.TextureMeta meta = resourceManager.getTextureMeta(glTexId);
             if (!readThroughCopy(meta)) continue;

@@ -83,6 +83,9 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `ResourceManager.returnBufferToPool` retiring storage that buffer textures still hold, typed sampler lookups in
   `SamplerBinder.bindStageSamplers` and `ComputeBinder.bindComputeSamplers`, and native MSL texture buffers in
   `MslCrossCompile` (whose cache keys are renamed so older translations are not reused).
+- Sampler bindings: `FBOClearTracker`, `StorageTextureBinder`, `MovedSamplerCopies`, and
+  `VertexWriteReplayer.capture` read sampled textures through `BufferTextureHooks.samplerBinding`;
+  `ComputeBinder.setSamplerOverrides` tells `TextureBindingHooks` (owned) while overrides are active.
 
 ## Deleted on `pz`
 

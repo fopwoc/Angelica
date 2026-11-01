@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.compute;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.vertex.VertexInputs;
 import com.gtnewhorizons.angelica.glsm.backend.VertexWriteReplaySetup;
 import com.gtnewhorizons.angelica.sdlgpu.SDLGPURenderBackend;
@@ -305,7 +306,7 @@ public final class VertexWriteReplayer {
         for (int i = 0; i < replay.samplerUnits.length; i++) {
             final int unit = replay.samplerUnits[i];
             final IntSupplier source = replay.samplerSources[i];
-            c.samplerTextures[i] = source != null ? source.getAsInt() : st.boundTextures[unit];
+            c.samplerTextures[i] = source != null ? source.getAsInt() : BufferTextureHooks.samplerBinding(st, unit);
             final IntSupplier sampler = replay.samplerObjects[i];
             final int samplerObject = sampler != null ? sampler.getAsInt() : st.boundSamplerObjects[unit];
             c.samplerHandles[i] = computeBinder.samplerHandle(samplerObject, c.samplerTextures[i]);

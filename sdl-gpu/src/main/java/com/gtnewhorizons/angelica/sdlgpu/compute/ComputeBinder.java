@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.compute;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureBindingHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.glsm.profiling.Tracy;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -54,6 +55,7 @@ public final class ComputeBinder implements ComputeDispatchSink {
     private ByteBuffer[] uniformBlockOverrides;
 
     public void setSamplerOverrides(long[] byUnit) {
+        TextureBindingHooks.samplerOverride(byUnit);
         samplerOverrides = byUnit;
     }
 

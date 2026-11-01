@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.sampler;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.resource.ResourceManager;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
@@ -74,7 +75,7 @@ public final class StorageTextureBinder {
             final int glTexId;
             if (movedSampler) {
                 glUnit = movedSamplerUnits[i];
-                glTexId = st.boundTexture(glUnit);
+                glTexId = BufferTextureHooks.samplerBinding(st, glUnit);
             } else {
                 glUnit = prog.imageTextureUnits.getInt(name);
                 glTexId = (glUnit >= 0 && glUnit < ContextState.MAX_IMAGE_UNITS) ? st.boundStorageTextureByUnit[glUnit] : 0;

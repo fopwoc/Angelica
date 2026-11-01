@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -123,7 +124,7 @@ public final class FBOClearTracker {
 
     private void collectSamplerFlush(ContextState st, int[] samplerUnits, int samplerCount, LongArrayList colorHandles, IntArrayList colorGlIds, LongArrayList depthHandles, IntArrayList depthGlIds) {
         for (int i = 0; i < samplerCount; i++) {
-            final int glTexId = st.boundTexture(samplerUnits[i]);
+            final int glTexId = BufferTextureHooks.samplerBinding(st, samplerUnits[i]);
             if (glTexId == 0) continue;
             final long handle = resourceManager.getTextureHandle(glTexId);
             if (handle == 0) continue;
