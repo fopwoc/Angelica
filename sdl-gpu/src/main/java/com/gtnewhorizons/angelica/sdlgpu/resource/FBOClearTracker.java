@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -219,6 +220,7 @@ public final class FBOClearTracker {
     }
 
     public void resolveDestinationForWrite(ContextState st, long destTex, ResourceManager.TextureMeta destMeta, int level, int dx, int dy, int dz, int w, int h, boolean allAspects) {
+        TextureViewHooks.sharedAccess(destTex);
         if (dz != 0 || !discardPendingClearIfFullyCovered(st, destTex, dx, dy, level, w, h, destMeta, allAspects)) {
             materializePendingClearForTexture(st, destTex);
         }
@@ -237,6 +239,7 @@ public final class FBOClearTracker {
     }
 
     public void materializePendingClearForTexture(ContextState st, long handle) {
+        TextureViewHooks.sharedAccess(handle);
         if (handle == 0) return;
         final boolean depthPending = st.pendingDepthTextures.remove(handle);
         final boolean stencilPending = st.pendingStencilTextures.remove(handle);

@@ -536,6 +536,8 @@ public abstract class RenderBackend {
     public boolean cachesBlendEquation() { return true; }
     /** Whether GLSM must leave this attribute's layout alone instead of repairing it from legacy pointer state. */
     public boolean preservesVertexLayout(int attribute) { return false; }
+    /** Deletes a texture at once instead of GLSM's deferred unbind-and-delete; true when the backend did so. */
+    public boolean deleteTextureNow(int texture) { return false; }
 
     public abstract void uniform1i(int location, int v0);
     public abstract void uniform1f(int location, float v0);

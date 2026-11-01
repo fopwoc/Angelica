@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureStorage;
 import java.util.function.LongConsumer;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.Hashing;
@@ -251,6 +252,7 @@ public final class ResourceManager {
     }
 
     private long createTextureCore(int glId, int glTarget, int sdlFormat, int glFormat, int width, int height, int depth, int levels, int usage) {
+        TextureViewHooks.beforeAllocation(glId);
         if (getTextureHandle(glId) != 0) beforeTextureReplaced();
         usage = reconcileUsageAndWarn(glId, usage);
         final int sdlType = mapTextureType(glTarget);
@@ -350,6 +352,7 @@ public final class ResourceManager {
     }
 
     public void releaseTextureHandleForRealloc(int glId) {
+        TextureViewHooks.beforeAllocation(glId);
         beforeTextureReplaced();
         final long handle;
         TextureStorage.changed();
@@ -365,6 +368,7 @@ public final class ResourceManager {
     }
 
     private void releaseTextureHandleAfterPendingUploads(long handle) {
+        if (TextureViewHooks.referenced(this, handle)) return;
         if (handle == 0) return;
         if (shouldDeferTextureRelease()) {
             releaseTextureDeferred(handle);

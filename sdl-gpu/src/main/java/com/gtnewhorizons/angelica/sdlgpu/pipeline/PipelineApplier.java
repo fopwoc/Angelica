@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
 import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
@@ -131,6 +132,7 @@ public final class PipelineApplier {
     }
 
     public void ensureDrawRenderPass(ContextState st, FrameState f) {
+        TextureViewHooks.prepare(st);
         DrawTrace.beforeDraw(st);
         logicOpEmulator.beforeDraw(st, f);
         ensureRenderPass(st, f, true);

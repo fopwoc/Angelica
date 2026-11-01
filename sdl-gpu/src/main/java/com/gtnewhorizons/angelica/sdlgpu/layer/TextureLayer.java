@@ -37,6 +37,14 @@ public abstract class TextureLayer extends FramebufferLayer {
         return TextureBindings.queryTarget(parameter) != 0;
     }
 
+    // Julia never shares textures across threads, so the owning thread deletes at once instead of deferring.
+    @Override
+    public boolean deleteTextureNow(int texture) {
+        Upstream.context();
+        deleteTextures(texture);
+        return true;
+    }
+
     @Override
     public void onTextureDeleted(int texture) {
         subsystems().textureBindings().deleted(Upstream.context(), texture);

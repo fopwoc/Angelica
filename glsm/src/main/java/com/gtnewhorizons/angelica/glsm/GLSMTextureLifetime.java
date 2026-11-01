@@ -65,6 +65,7 @@ public final class GLSMTextureLifetime {
      * Damned if I know, but vanilla and mods do it... they create one, delete it, and then bind it....
      * */
     static void deferDeleteTexture(int id) {
+        if (RENDER_BACKEND.deleteTextureNow(id)) return;
         final GLContextState glCtx = ctx();
         if (id == 0) return;
 

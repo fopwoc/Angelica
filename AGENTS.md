@@ -74,6 +74,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
   creates pipelines natively, and types disabled attributes from the generic value; `VertexWriteReplayer` clamps
   replay divisors through it. `RenderBackend.preservesVertexLayout` (new, default `false`) stops
   `GLSMVertexInput.pointAttrib` from repairing layouts `VertexLayer` owns.
+- Texture views through `TextureViewHooks` (owned): `FBOClearTracker` marks shared access before clearing or writing
+  a texture; `ResourceManager` keeps handles still referenced by views and notifies views before reallocating a name;
+  `PipelineApplier.ensureDrawRenderPass` prepares views and buffer textures; `SamplerBinder` samples through views,
+  buffer textures and fallbacks. `RenderBackend.deleteTextureNow` (new, default `false`) lets `TextureLayer` delete
+  at once instead of `GLSMTextureLifetime.deferDeleteTexture`'s deferral.
 
 ## Deleted on `pz`
 
