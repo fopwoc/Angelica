@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureStorage;
 import java.util.function.LongConsumer;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.Hashing;
 import org.apache.logging.log4j.LogManager;
@@ -285,6 +286,7 @@ public final class ResourceManager {
                 device.reportGpuFailure("createTexture " + width + "x" + height + " fmt=0x" + Integer.toHexString(glFormat) + " sdlFmt=0x" + Integer.toHexString(sdlFormat) + " usage=0x" + Integer.toHexString(usage));
                 return 0;
             }
+            TextureStorage.changed();
             wLock.lock();
             try {
                 textureHandles.put(glId, handle);
@@ -292,6 +294,7 @@ public final class ResourceManager {
                 textureMetas.put(glId, new TextureMeta(glTarget, glFormat, sdlFormat, width, height, dCount, lCount, usage));
             } finally {
                 wLock.unlock();
+                TextureStorage.changed();
             }
             return handle;
         }
@@ -326,6 +329,7 @@ public final class ResourceManager {
     public void deleteTexture(int glId) {
         beforeTextureReplaced();
         final long handle;
+        TextureStorage.changed();
         wLock.lock();
         try {
             handle = textureHandles.remove(glId);
@@ -340,6 +344,7 @@ public final class ResourceManager {
             texSamplerStates.remove(glId);
         } finally {
             wLock.unlock();
+            TextureStorage.changed();
         }
         releaseTextureHandleAfterPendingUploads(handle);
     }
@@ -347,12 +352,14 @@ public final class ResourceManager {
     public void releaseTextureHandleForRealloc(int glId) {
         beforeTextureReplaced();
         final long handle;
+        TextureStorage.changed();
         wLock.lock();
         try {
             handle = textureHandles.remove(glId);
             textureMetas.remove(glId);
         } finally {
             wLock.unlock();
+            TextureStorage.changed();
         }
         releaseTextureHandleAfterPendingUploads(handle);
     }
@@ -665,12 +672,14 @@ public final class ResourceManager {
     }
 
     private void restoreTextureHandle(int glId, long handle, TextureMeta meta) {
+        TextureStorage.changed();
         wLock.lock();
         try {
             textureHandles.put(glId, handle);
             textureMetas.put(glId, meta);
         } finally {
             wLock.unlock();
+            TextureStorage.changed();
         }
     }
 

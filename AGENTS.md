@@ -51,6 +51,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `ResourceManager.textureHandles`/`textureMetas`/`wLock`/`beforeTextureReplaced` (public).
 - `sdl-gpu`'s `RenderBackend` service file registers only `HostedBackend`, the owned subclass chain
   (`sdlgpu.layer`) over `SDLGPURenderBackend`.
+- `ResourceManager`: `TextureStorage.changed()` before taking and after releasing the write lock in the four texture
+  map writers, so per-draw caches of derived texture state know to refresh.
 
 ## Deleted on `pz`
 
