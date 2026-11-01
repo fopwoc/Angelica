@@ -166,6 +166,7 @@ public final class GLSMQueries {
     }
 
     static int glGetInteger(GLContextState glCtx, int pname) {
+        if (RENDER_BACKEND.answersTextureBindingQuery(pname)) return RENDER_BACKEND.getInteger(pname);
         if (!isCachingEnabled()) {
             return RENDER_BACKEND.getInteger(pname);
         }

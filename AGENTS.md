@@ -57,6 +57,9 @@ Keep this list current. One line per hook: file, what it calls, and why.
   instanced draws.
 - `RenderBackend.compatShaderSource` (new, defaults to `CompatShaderTransformer.transform`): `GLSMPrograms.glShaderSource`
   calls it; `ShaderLayer` overrides it to resolve conditional GLSL first (`CompatShaderInput`).
+- `RenderBackend.selectTextureTarget`/`answersTextureBindingQuery`/`onTextureDeleted` (new, no-op defaults): called at
+  the head of GLSM's 30 target-taking texture operations, `GLSMQueries.glGetInteger`, and
+  `GLSMTextures.onDeleteTexture`; `TextureLayer` keeps per-target logical bindings through them.
 
 ## Deleted on `pz`
 

@@ -525,6 +525,12 @@ public abstract class RenderBackend {
     }
     public abstract void getShaderSource(int shader, IntBuffer length, ByteBuffer source);
 
+    /** Selects which texture a GLSM operation on {@code target} affects, before GLSM consults its binding cache. */
+    public void selectTextureTarget(int target) {}
+    /** Whether {@link #getInteger(int)} answers this texture binding query from the backend's own bindings. */
+    public boolean answersTextureBindingQuery(int parameter) { return false; }
+    public void onTextureDeleted(int texture) {}
+
     public abstract void uniform1i(int location, int v0);
     public abstract void uniform1f(int location, float v0);
     public void uniform1fv(int location, FloatBuffer values) {}

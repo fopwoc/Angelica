@@ -12,6 +12,7 @@ import static org.lwjgl.opengl.GL31.GL_TEXTURE_BUFFER;
 import static org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING;
 import static org.lwjgl.opengl.GL43.GL_DEPTH_STENCIL_TEXTURE_MODE;
 
+import com.gtnewhorizons.angelica.glsm.GLSMTextures;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
 import com.gtnewhorizons.angelica.sdlgpu.texture.ClientPixels;
@@ -23,6 +24,24 @@ import java.nio.IntBuffer;
 
 /** Logical per-target texture bindings, views, buffer textures, and upload paths SDL needs adjusted. */
 public abstract class TextureLayer extends FramebufferLayer {
+    // GLSM caches one binding per unit; operations must act on the logical binding of their own target.
+    @Override
+    public void selectTextureTarget(int target) {
+        if (!TextureBindings.selectable(target)) return;
+        var state = Upstream.context();
+        GLSMTextures.glBindTexture(target, subsystems().textureBindings().get(state, state.activeTextureUnit, target));
+    }
+
+    @Override
+    public boolean answersTextureBindingQuery(int parameter) {
+        return TextureBindings.queryTarget(parameter) != 0;
+    }
+
+    @Override
+    public void onTextureDeleted(int texture) {
+        subsystems().textureBindings().deleted(Upstream.context(), texture);
+    }
+
     // Not indexed in GL, but drivers answer it per unit and PZ3D saves every unit's sampler this way.
     @Override
     public int getIntegerIndexed(int parameter, int index) {
