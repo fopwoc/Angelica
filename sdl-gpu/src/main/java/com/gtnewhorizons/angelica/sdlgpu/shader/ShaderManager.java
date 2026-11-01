@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.shader;
 
+import com.gtnewhorizons.angelica.sdlgpu.bridge.SamplerShaderBridge;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import com.gtnewhorizons.angelica.glsm.GlslTransformUtils;
 import com.gtnewhorizons.angelica.glsm.hooks.GLSMHooks;
@@ -128,11 +129,11 @@ public final class ShaderManager {
     }
 
     static ShaderDiskCache.Key stageKey(String source, int glShaderType) {
-        return ShaderDiskCache.key("sdl-stage").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType);
+        return ShaderDiskCache.key("julia-samplers-v3-sdl-stage").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType);
     }
 
     static ShaderDiskCache.Key prewarmKey(String source, int glShaderType, PerFrameUniformBlock perFrame, PerFrameUniformBlock perPass) {
-        return appendBlocks(ShaderDiskCache.key("sdl-prewarm").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType), perFrame, perPass);
+        return appendBlocks(ShaderDiskCache.key("julia-samplers-v3-sdl-prewarm").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType), perFrame, perPass);
     }
 
     static ShaderDiskCache.Key transformDiskKey(String source, int glShaderType, PerFrameUniformBlock perFrame, PerFrameUniformBlock perPass) {
@@ -676,17 +677,8 @@ public final class ShaderManager {
     }
 
     private static @Nullable String slotBudgetError(String stage, ResourceCounts counts, boolean[] movedSamplers) {
-        if (counts.numSamplers() > SamplerOverflow.SAMPLER_SLOTS) {
-            int moved = 0;
-            for (boolean m : movedSamplers) if (m) moved++;
-            final String limit = "Too many " + stage + " shader texture samplers (" + counts.numSamplers() + ", maximum " + SamplerOverflow.SAMPLER_SLOTS + ")";
-            return moved == 0 ? limit : limit + ", even after moving " + moved + " that are only read through texelFetch/textureSize to texture slots";
-        }
-        if (counts.numStorageTextures() > SamplerOverflow.TEXTURE_SLOTS) {
-            return stage + " shader reads " + counts.numStorageTextures() + " images and textures without a sampler but SDL_GPU binds at most "
-                + SamplerOverflow.TEXTURE_SLOTS + " per stage";
-        }
-        return null;
+        // Sampler arrays, wide sampler tables and moved samplers are reflected by SamplerResources.
+        return SamplerResources.budget(stage, counts, movedSamplers);
     }
 
     private void linkComputeProgram(int program, ProgramObject prog) {
@@ -755,7 +747,7 @@ public final class ShaderManager {
                 refl.numReadonlyStorageTextures(), refl.numReadwriteStorageTextures(),
                 localSize[0], localSize[1], localSize[2]);
 
-            final long handle = SDL_CreateGPUComputePipeline(device.getDevice(), ci);
+            final long handle = SamplerShaderBridge.createComputePipeline(device.getDevice(), ci);
             if (handle == 0) {
                 LOG.error("Failed to create SDL GPU compute pipeline for program {}: {}", program, SDLError.SDL_GetError());
                 prog.linked = false;
@@ -938,7 +930,7 @@ public final class ShaderManager {
     }
 
     private static ShaderDiskCache.Key variantKey(String vertexSource, List<UscaledRetype.Attrib> attribs) {
-        final ShaderDiskCache.Key key = ShaderDiskCache.key("sdl-vertex-variant").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId())
+        final ShaderDiskCache.Key key = ShaderDiskCache.key("julia-samplers-v3-sdl-vertex-variant").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId())
             .str(vertexSource).i(attribs.size());
         for (UscaledRetype.Attrib a : attribs) {
             key.str(a.name()).i(a.location()).i(a.declVecSize()).i(a.boundVecSize()).i(a.signed() ? 1 : 0);
@@ -1224,7 +1216,7 @@ public final class ShaderManager {
                 Integer.toHexString(cc.targetFormat()), cc.entrypoint(),
                 cc.code().position(), cc.code().limit(), cc.code().remaining());
 
-            final long handle = SDL_CreateGPUShader(device.getDevice(), ci);
+            final long handle = SamplerShaderBridge.createShader(device.getDevice(), ci);
             if (handle == 0) {
                 LOG.error("Failed to create SDL GPU shader: {}", SDLError.SDL_GetError());
             }
@@ -1339,6 +1331,7 @@ public final class ShaderManager {
     }
 
     public static ComputeBindingMap remapSpirvForComputeSDLGPU(ByteBuffer spirv) {
+        SamplerShaderBridge.requireComputeLayout(spirv);
         final Int2IntOpenHashMap idToNewSet = new Int2IntOpenHashMap();
         final Int2IntOpenHashMap idToNewBinding = new Int2IntOpenHashMap();
         final IntArrayList samplerSlots = new IntArrayList();
@@ -1573,19 +1566,8 @@ public final class ShaderManager {
     }
 
     private static int collectResourceIds(long resources, long compiler, int resourceType, Int2IntOpenHashMap idToNewSet, Int2IntOpenHashMap idToNewBinding, int targetSet, int nextBinding, MemoryStack stack) {
-        final PointerBuffer pList = stack.pointers(0);
-        final PointerBuffer pCount = stack.pointers(0);
-        if (Spvc.spvc_resources_get_resource_list_for_type(resources, resourceType, pList, pCount) != Spvc.SPVC_SUCCESS) return nextBinding;
-        final int count = (int) pCount.get(0);
-        if (count == 0) return nextBinding;
-        final SpvcReflectedResource.Buffer list = SpvcReflectedResource.create(pList.get(0), count);
-        int next = nextBinding;
-        for (int j = 0; j < count; j++) {
-            final int spvId = list.get(j).id();
-            idToNewSet.put(spvId, targetSet);
-            idToNewBinding.put(spvId, next++);
-        }
-        return next;
+        // Sampler arrays, wide sampler tables and moved samplers are reflected by SamplerResources.
+        return SamplerResources.remap(resources, compiler, resourceType, idToNewSet, idToNewBinding, targetSet, nextBinding, stack);
     }
 
     private static ByteBuffer copyBuffer(ByteBuffer src) {
@@ -1957,12 +1939,8 @@ public final class ShaderManager {
     }
 
     private static void collectSamplerEntries(long resources, long compiler, int resourceType, List<String> namesOut, IntArrayList bindingsOut, MemoryStack stack) {
-        forEachResource(resources, resourceType, stack, (i, r) -> {
-            final String name = Spvc.spvc_compiler_get_name(compiler, r.id());
-            final int binding = Spvc.spvc_compiler_get_decoration(compiler, r.id(), Spv.SpvDecorationBinding);
-            namesOut.add(name != null ? name : ("sampler_" + i));
-            bindingsOut.add(binding);
-        });
+        // Sampler arrays, wide sampler tables and moved samplers are reflected by SamplerResources.
+        SamplerResources.entries(resources, compiler, resourceType, namesOut, bindingsOut, stack);
     }
 
     private static List<String> unusedSamplerNames(long compiler, long resources, MemoryStack stack) {
@@ -1990,15 +1968,8 @@ public final class ShaderManager {
     }
 
     private static void registerSamplerLocations(ProgramObject prog, StageReflection... stages) {
-        final Set<String> read = new HashSet<>();
-        for (StageReflection stage : stages) {
-            for (String name : stage.samplerNames()) {
-                if (!stage.unusedSamplerNames().contains(name)) read.add(name);
-            }
-        }
-        for (String name : prog.allSamplerNames) {
-            if (read.contains(name)) ensureLocation(prog, name);
-        }
+        // Sampler arrays, wide sampler tables and moved samplers are reflected by SamplerResources.
+        SamplerResources.register(prog, stages);
     }
 
     private static void collectResourceNames(long resources, long compiler, int resourceType, List<String> out, MemoryStack stack) {

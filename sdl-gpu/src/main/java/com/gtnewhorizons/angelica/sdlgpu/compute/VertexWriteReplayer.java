@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.compute;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureBindings;
 import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.vertex.VertexInputs;
 import com.gtnewhorizons.angelica.glsm.backend.VertexWriteReplaySetup;
@@ -48,7 +49,7 @@ public final class VertexWriteReplayer {
     private static final int NO_ELEMENT = 0x8000;
     private static final int MAX_DIVISOR = 0xFFFF;
     private static final int UNCHANGED = -1;
-    private static final int TEXTURE_UNITS = 32;
+    private static final int TEXTURE_UNITS = TextureBindings.UNIT_COUNT;
 
     public static final class Replay {
         final int replayProgram;

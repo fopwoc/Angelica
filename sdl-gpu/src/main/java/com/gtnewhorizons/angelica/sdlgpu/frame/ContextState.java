@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.frame;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureBindings;
+import com.gtnewhorizons.angelica.sdlgpu.shader.SamplerResources;
 import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.glsm.GLContextState;
 import com.gtnewhorizons.angelica.sdlgpu.SDLGPURenderBackend;
@@ -43,7 +45,8 @@ public final class ContextState {
 
     public static final int MAX_INDEXED_BUFFERS = 16;
     public static final int MAX_IMAGE_UNITS = 8;
-    public static final int MAX_SAMPLERS = 16;
+    // Wider than SDL's 16 per stage; SamplerResources binds the excess through arrays or argument buffers.
+    public static final int MAX_SAMPLERS = SamplerResources.LIMIT;
     public static final int MAX_STORAGE_BUFFERS_PER_STAGE = 8;
     public static final int MAX_VERTEX_ATTRIBS = 16;
     public static final int MAX_COLOR_ATTACHMENTS = 8;
@@ -311,12 +314,12 @@ public final class ContextState {
     public final int[] boundStorageTextureLayer = new int[MAX_IMAGE_UNITS];
     public final int[] boundStorageTextureAccess = new int[MAX_IMAGE_UNITS];
     public final int[] boundStorageTextureFormat = new int[MAX_IMAGE_UNITS];
-    public final int[] boundTextures = new int[32];
+    public final int[] boundTextures = new int[TextureBindings.UNIT_COUNT];
 
     public int boundTexture(int unit) {
         return unit >= 0 && unit < boundTextures.length ? boundTextures[unit] : 0;
     }
-    public final int[] boundSamplerObjects = new int[32];
+    public final int[] boundSamplerObjects = new int[TextureBindings.UNIT_COUNT];
 
     public boolean computeBatchRequested;
     public long computeBatchPass;

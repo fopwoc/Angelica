@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.shader.msl;
 
+import com.gtnewhorizons.angelica.sdlgpu.shader.InstanceIndexSpirv;
+import com.gtnewhorizons.angelica.sdlgpu.bridge.SamplerShaderBridge;
 import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import com.gtnewhorizons.angelica.sdlgpu.shader.cross.CrossCompileCache;
@@ -42,6 +44,9 @@ public final class MslCrossCompile {
     private MslCrossCompile() {}
 
     public static Output compile(ByteBuffer spirv, int glShaderType, boolean textureAtomics) {
+        spirv = InstanceIndexSpirv.translate(spirv, glShaderType);
+        // Wider sampler tables than SDL's per-stage limit compile through one indirect argument buffer.
+        if (SamplerShaderBridge.needsArguments(spirv, glShaderType)) return SamplerShaderBridge.compile(spirv, glShaderType);
         final boolean atomics = textureAtomics && glShaderType == GL43.GL_COMPUTE_SHADER && CrossCompileUtil.usesImageAtomics(spirv);
         return (atomics ? CACHE_3_1 : CACHE).compile(spirv, glShaderType);
     }

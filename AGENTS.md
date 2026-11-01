@@ -86,6 +86,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - Sampler bindings: `FBOClearTracker`, `StorageTextureBinder`, `MovedSamplerCopies`, and
   `VertexWriteReplayer.capture` read sampled textures through `BufferTextureHooks.samplerBinding`;
   `ComputeBinder.setSamplerOverrides` tells `TextureBindingHooks` (owned) while overrides are active.
+- Sampler tables: `ContextState.MAX_SAMPLERS` is `SamplerResources.LIMIT` (32) and its logical unit arrays, like
+  `VertexWriteReplayer.TEXTURE_UNITS`, use `TextureBindings.UNIT_COUNT` (256); `GLStateManager.MAX_TEXTURE_UNITS`
+  asks for the combined unit count. `ShaderManager` creates shaders and compute pipelines through `SamplerShaderBridge`
+  (owned), delegates sampler reflection to `SamplerResources`, checks compute layouts, and renames its disk-cache
+  keys; `MslCrossCompile.compile` rewrites instance indices and compiles wide sampler tables through argument buffers.
 
 ## Deleted on `pz`
 

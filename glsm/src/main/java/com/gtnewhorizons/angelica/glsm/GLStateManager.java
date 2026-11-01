@@ -254,7 +254,7 @@ public class GLStateManager {
     public static final int MAX_TEXTURE_STACK_DEPTH = 4;
     public static final int MAX_CLIP_PLANES = 8;
     public static final int INDEXED_BUFFER_SLOTS = 64;
-    public static final int MAX_TEXTURE_UNITS = RENDER_BACKEND.getInteger(GL20.GL_MAX_TEXTURE_IMAGE_UNITS);
+    public static final int MAX_TEXTURE_UNITS = RENDER_BACKEND.getInteger(GL20.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     public static final int MAX_LEGACY_TEXTURE_UNITS = Math.min(VertexKey.MAX_UNITS, MAX_TEXTURE_UNITS);
     public static final int MAX_TEXTURE_COORDS = Math.min(VAOManager.TEX_COORD_UNITS, MAX_TEXTURE_UNITS);
 
