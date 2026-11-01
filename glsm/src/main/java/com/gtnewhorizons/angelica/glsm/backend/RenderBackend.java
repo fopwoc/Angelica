@@ -648,6 +648,9 @@ public abstract class RenderBackend {
     public abstract void textureSubImage2D(int texture, int level, int xoffset, int yoffset, int width, int height, int format, int type, IntBuffer pixels);
     public abstract int createFramebuffers();
     public abstract void namedFramebufferTexture(int framebuffer, int attachment, int texture, int level);
+    public void namedFramebufferTextureLayer(int framebuffer, int attachment, int texture, int level, int layer) {
+        throw new UnsupportedOperationException("Named framebuffer layer attachment is not implemented");
+    }
     public abstract void namedFramebufferReadBuffer(int framebuffer, int mode);
     public abstract void namedFramebufferDrawBuffers(int framebuffer, IntBuffer bufs);
     public abstract void blitNamedFramebuffer(int readFramebuffer, int drawFramebuffer, int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter);

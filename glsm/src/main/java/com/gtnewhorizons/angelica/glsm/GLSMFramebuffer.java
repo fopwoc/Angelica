@@ -253,9 +253,9 @@ public final class GLSMFramebuffer {
     }
 
     public static void glNamedFramebufferTextureLayer(int framebuffer, int attachment, int texture, int level, int layer) {
-        final int previous = swapDrawFramebuffer(framebuffer);
-        glFramebufferTextureLayer(GL30.GL_DRAW_FRAMEBUFFER, attachment, texture, level, layer);
-        swapDrawFramebuffer(previous);
+        rejectExitCapture();
+        if (!GLSMTextureLifetime.beginAttach(ctx(), framebuffer, attachment, texture)) return;
+        RENDER_BACKEND.namedFramebufferTextureLayer(framebuffer, attachment, texture, level, layer);
     }
 
     public static void glNamedFramebufferRenderbuffer(int framebuffer, int attachment, int renderbuffertarget, int renderbuffer) {

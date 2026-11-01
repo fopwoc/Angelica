@@ -68,7 +68,7 @@ Keep this list current. One line per hook: file, what it calls, and why.
   the Minecraft splash path (`SplashDispatcher`, `OffscreenTarget`, the splash branches) stays in place but never
   runs.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
-  capability shim on the initializing thread.
+  capability shim in `onPostWindowCreate` (including offscreen windows), before GLSM pre-initialization reads it.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.
 - `TessellatorEntityIds`, `TessellatorStreamingDrawer`: import GTNHLib's owned `Tessellator` instead of Minecraft's;
   its global `instance` is always `null`.
@@ -117,6 +117,9 @@ Keep this list current. One line per hook: file, what it calls, and why.
   asks for the combined unit count. `ShaderManager` creates shaders and compute pipelines through `SamplerShaderBridge`
   (owned), delegates sampler reflection to `SamplerResources`, checks compute layouts, and renames its disk-cache
   keys; `MslCrossCompile.compile` rewrites instance indices and compiles wide sampler tables through argument buffers.
+
+- `RenderBackend.namedFramebufferTextureLayer` (new, fails if unsupported): `GLSMFramebuffer` calls it directly;
+  `FramebufferLayer` attaches the requested slice without temporary binding changes, including when validation fails.
 
 ## Deleted on `pz`
 

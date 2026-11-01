@@ -279,7 +279,7 @@ public class SDLGPURenderBackend extends RenderBackend {
 
     @Override public void onPostWindowCreate(long window) {
         buildCachedStrings();
-        if (window != 0L) populateGLCapabilities();
+        populateGLCapabilities();
     }
 
     private boolean hasWindow() {
@@ -366,9 +366,6 @@ public class SDLGPURenderBackend extends RenderBackend {
             LOG.info("SDL presenter thread enabled: presents run on '{}'", device.getWindowThread() != null ? device.getWindowThread().getName() : "window thread");
         }
 
-        Lwjgl3GLCapabilitiesShim.installFunctionProvider();
-        Lwjgl3GLCapabilitiesShim.installOnCurrentThread(advertisedCapabilities());
-
         LOG.info("SDLGPURenderBackend initialized: renderer={}, version={}", cachedRenderer, cachedVersion);
     }
 
@@ -435,6 +432,9 @@ public class SDLGPURenderBackend extends RenderBackend {
     }
 
     private void populateGLCapabilities() {
+        // GLSM reads this thread's capabilities during preInit, before backend init runs.
+        Lwjgl3GLCapabilitiesShim.installFunctionProvider();
+        Lwjgl3GLCapabilitiesShim.installOnCurrentThread(advertisedCapabilities());
         cachedExtensions = String.join(" ", ADVERTISED_EXTENSIONS);
 
         LOG.info("Populated GL capabilities for SDL GPU backend");

@@ -9,6 +9,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.bridge.BlendBridge;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.IndexedCapabilities;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -16,6 +17,20 @@ import org.lwjgl.system.MemoryUtil;
 
 /** Framebuffer attachments with layer slices, draw/read buffer selection, clears, and readback guards. */
 public abstract class FramebufferLayer extends BufferLayer {
+    @Override
+    public void enablei(int capability, int index) {
+        IndexedCapabilities.require(capability, index);
+        Upstream.flushTextureReferences();
+        super.enablei(capability, index);
+    }
+
+    @Override
+    public void disablei(int capability, int index) {
+        IndexedCapabilities.require(capability, index);
+        Upstream.flushTextureReferences();
+        super.disablei(capability, index);
+    }
+
     @Override
     public boolean cachesColorMask() {
         return !subsystems().colorMasks().indexed();
@@ -108,6 +123,13 @@ public abstract class FramebufferLayer extends BufferLayer {
     }
 
     @Override
+    public void framebufferTextureLayer(int target, int attachment, int texture, int level, int layer) {
+        subsystems()
+                .framebuffers()
+                .attach(subsystems().framebuffers().selected(target), attachment, texture, level, layer, true);
+    }
+
+    @Override
     public int checkFramebufferStatus(int target) {
         return subsystems().framebuffers().status(subsystems().framebuffers().selected(target), target);
     }
@@ -115,6 +137,11 @@ public abstract class FramebufferLayer extends BufferLayer {
     @Override
     public void namedFramebufferTexture(int name, int attachment, int texture, int level) {
         subsystems().framebuffers().attach(name, attachment, texture, level, 0, false);
+    }
+
+    @Override
+    public void namedFramebufferTextureLayer(int name, int attachment, int texture, int level, int layer) {
+        subsystems().framebuffers().attach(name, attachment, texture, level, layer, true);
     }
 
     @Override

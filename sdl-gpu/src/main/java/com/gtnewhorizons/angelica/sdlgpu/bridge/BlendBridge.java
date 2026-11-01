@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL20.GL_BLEND_EQUATION_RGB;
 import com.gtnewhorizons.angelica.glsm.GLSMBlend;
 import com.gtnewhorizons.angelica.glsm.GLSMEnable;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.IndexedCapabilities;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
 import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
@@ -54,19 +55,15 @@ public final class BlendBridge {
     }
 
     public static void glEnablei(int capability, int index) {
-        requireIndexed(capability, index);
-        Upstream.flushTextureReferences();
         GLSMEnable.glEnablei(capability, index);
     }
 
     public static void glDisablei(int capability, int index) {
-        requireIndexed(capability, index);
-        Upstream.flushTextureReferences();
         GLSMEnable.glDisablei(capability, index);
     }
 
     public static boolean glIsEnabledi(int capability, int index) {
-        requireIndexed(capability, index);
+        IndexedCapabilities.require(capability, index);
         var state = Upstream.context();
         return capability == GL_BLEND ? state.pipeline.blendEnabledPerDrawBuffer[index] : state.scissorEnabled;
     }
@@ -98,16 +95,6 @@ public final class BlendBridge {
         for (int mode : new int[] {GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX})
             if (FormatMap.mapBlendOp(mode) == sdl) return mode;
         throw new IllegalStateException("Unknown SDL blend op: " + sdl);
-    }
-
-    private static void requireIndexed(int capability, int index) {
-        int limit = switch (capability) {
-            case GL_BLEND -> ContextState.MAX_COLOR_ATTACHMENTS;
-            case GL_SCISSOR_TEST -> 1;
-            default -> throw new UnsupportedOperationException("Indexed capability not implemented: " + capability);
-        };
-        if (index < 0 || index >= limit)
-            throw new IllegalArgumentException("Indexed capability index out of range: " + index);
     }
 
     private static void requireFactor(int factor) {
