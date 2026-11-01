@@ -15,6 +15,14 @@ classes are vendored here.
 - We do not open upstream PRs, so upstream's contribution and AI policies do not bind this branch. Findings worth
   sharing go upstream as issues the user writes.
 
+## Owned code
+
+- `sdlgpu.HostedBackend` is the registered backend; `sdlgpu.layer` holds its overrides, one abstract layer per GL
+  domain. `Subsystems` holds their state, and `Upstream` reaches the widened upstream internals.
+- `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
+  (bridges) apart from execution changes (layers and hooks).
+- `sdlgpu.extension` binds the native SDL extensions built from `sdl-gpu/native`.
+
 ## Zones
 
 - **Tracked**: files that also exist upstream. Change them only with small hooks: a call into owned code, a setter, a
