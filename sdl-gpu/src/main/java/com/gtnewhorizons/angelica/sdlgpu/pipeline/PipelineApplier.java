@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
 import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -129,6 +130,7 @@ public final class PipelineApplier {
     }
 
     public void ensureDrawRenderPass(ContextState st, FrameState f) {
+        DrawTrace.beforeDraw(st);
         logicOpEmulator.beforeDraw(st, f);
         ensureRenderPass(st, f, true);
     }

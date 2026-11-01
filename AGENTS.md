@@ -53,6 +53,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
   (`sdlgpu.layer`) over `SDLGPURenderBackend`.
 - `ResourceManager`: `TextureStorage.changed()` before taking and after releasing the write lock in the four texture
   map writers, so per-draw caches of derived texture state know to refresh.
+- `PipelineApplier.ensureDrawRenderPass`: `DrawTrace.beforeDraw` at the common draw boundary, including indirect and
+  instanced draws.
 
 ## Deleted on `pz`
 
