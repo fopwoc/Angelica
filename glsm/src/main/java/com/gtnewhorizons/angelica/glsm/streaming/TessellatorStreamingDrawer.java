@@ -21,7 +21,7 @@ import com.gtnewhorizons.angelica.glsm.hooks.GLSMHooks;
 import com.gtnewhorizons.angelica.glsm.hooks.ImmediateExtendedAttribHandler;
 import com.gtnewhorizons.angelica.glsm.hooks.LineDrawHandler;
 import com.gtnewhorizons.angelica.glsm.profiling.Tracy;
-import net.minecraft.client.renderer.Tessellator;
+import com.gtnewhorizon.gtnhlib.client.renderer.Tessellator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;

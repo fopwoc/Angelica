@@ -1,11 +1,18 @@
 # Angelica, `pz` branch
 
-This branch is the renderer for Julia, a Project Zomboid mod. Only `glsm`, `sdl-gpu`, and the patched SDL build in
-`sdl-gpu/native` matter here; Julia compiles them with its own Gradle build and keeps the build trees outside the
-fork. Every other module is left untouched and unbuilt.
-Minecraft compatibility is not preserved, and the renderer targets LWJGL3 only: no LWJGL2 API, lwjgl3ify, or
-`org.lwjglx`. The one exception is the GTNHLib binary glsm still links; Julia remaps it at load time until its used
-classes are vendored here.
+This branch is the renderer for [Julia](https://github.com/fopwoc/julia-pz), a Project Zomboid mod. Only `glsm`,
+`sdl-gpu`, the patched SDL build in `sdl-gpu/native`, and the GTNHLib subset in `third_party/gtnhlib` matter here.
+Julia compiles them with its own Gradle build and keeps the build trees outside the fork. Every other module is left
+untouched and unbuilt, and may stop compiling. Minecraft compatibility is not preserved, and the renderer targets
+LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
+
+## Submodule chain
+
+- Julia pins this fork at `third_party/angelica`; this fork pins `fopwoc/GTNHLib` (`pz`) at `third_party/gtnhlib`,
+  which has its own `AGENTS.md`. Clone and update with `--recursive`.
+- Commit innermost first: GTNHLib `pz`, then the pin bump here, then the pin bump in Julia.
+- `third_party/gtnhlib` follows the GTNHLib version in `gradle/libs.versions.toml`. When an upstream merge bumps it,
+  merge that GTNHLib tag into its `pz` and bump the pin here.
 
 ## Upstream
 
@@ -27,10 +34,17 @@ classes are vendored here.
 
 - **Tracked**: files that also exist upstream. Change them only with small hooks: a call into owned code, a setter, a
   wider visibility. Match upstream style, and never reformat, reorder, or rename in them.
-- **Owned**: files added on `pz` (`git diff --diff-filter=A upstream/master...pz --name-only`). Free to change. Put
-  them in upstream's domain packages so package-private access works.
+- **Owned**: files added on `pz` (`git diff --diff-filter=A upstream/master...pz --name-only`). Free to change. Use
+  upstream's packages when package-private access helps, or a new package under `sdlgpu` for a new domain.
 - **Deleted**: Minecraft and launcher glue removed on `pz`. When upstream edits one, keep it deleted.
 - Owned code must not reference `dev.fopwoc.julia`. Julia configures the renderer through fork APIs before `init()`.
+
+## Style
+
+- Tracked files keep upstream's formatting and log4j loggers. Owned files came from Julia and keep its formatting and
+  `System.Logger`.
+- Use comments for non-obvious reasoning only. Javadoc a class when its role isn't evident from its name.
+- The fork's test trees are not compiled by Julia's build yet; moved tests live beside their classes for when they are.
 
 ## Hooks in tracked files
 
@@ -54,6 +68,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
   capability shim on the initializing thread.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.
+- `TessellatorEntityIds`, `TessellatorStreamingDrawer`: import GTNHLib's owned `Tessellator` instead of Minecraft's;
+  its global `instance` is always `null`.
 - Widened for `Upstream` (owned, `sdlgpu`): `SDLGPURenderBackend`'s manager fields, `s()`, `flushAndSubmitMidFrame`,
   and `midFrameFenceFlush` (package-private); `FenceTracker.fenceMap`, `ShaderManager.releaseShaderAttachment`, and
   `ResourceManager.textureHandles`/`textureMetas`/`wLock`/`beforeTextureReplaced` (public).
@@ -105,5 +121,6 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - LWJGL2 `Display`/`Drawable` context model: `GLStateManager.makeCurrent`/`releaseContext`/`swapBuffers`/
   `updateDisplay`, the matching `RenderBackend` hooks and redirector rewrites, `SDLDrawable`, `SDLGPUDisplayBridge`.
 - GLU quadrics (`compat/lwjgl/Angelica*`), `Lwjgl2GLRenderBackend` and glsm's service file that registered it,
-  `MainThreadPump.pollInput`, the `launchwrapper` stub, and the `KHRDebugCallback` overload of
+  `MainThreadPump.pollInput`, glsm's Minecraft stubs (`glsm/src/stubs`), and the `KHRDebugCallback` overload of
   `glDebugMessageCallback`.
+- `README_uk.MD`, upstream's Minecraft mod README; `README.MD` describes this fork.

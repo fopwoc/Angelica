@@ -1,6 +1,6 @@
 package com.gtnewhorizons.angelica.glsm.streaming;
 
-import net.minecraft.client.renderer.Tessellator;
+import com.gtnewhorizon.gtnhlib.client.renderer.Tessellator;
 
 import java.util.Arrays;
 

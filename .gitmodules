@@ -1,0 +1,4 @@
+[submodule "third_party/gtnhlib"]
+	path = third_party/gtnhlib
+	url = https://github.com/fopwoc/GTNHLib.git
+	branch = pz
