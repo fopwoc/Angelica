@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
 import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
 
@@ -144,6 +145,7 @@ public final class PipelineApplier {
     }
 
     private void ensureRenderPass(ContextState st, FrameState f, boolean draw) {
+        FramebufferHooks.validateDraw(st);
         if (!f.frameActive) return;
 
         fboClearTracker.flushPendingClearsForBoundSamplers(st);
@@ -192,7 +194,7 @@ public final class PipelineApplier {
         fboClearTracker.materializePendingClearsForMipTargets(st, fbo);
 
         final int totalTargets = fbo.drawBuffers.length;
-        final long dummyTex = totalTargets > 0 ? resourceManager.getOrCreateDummyColorTarget() : 0L;
+        final long dummyTex = totalTargets > 0 ? FramebufferHooks.unusedTarget(resourceManager) : 0L;
 
         int proposedClearOps = 0;
         long layoutHash = Hashing.fmix64(0xA5A5A5A5A5A5A5A5L, totalTargets);
@@ -325,7 +327,7 @@ public final class PipelineApplier {
 
         consumeClears(resourceManager, st, fbo, dummyTex, proposedClearOps, proposedDepthClear, proposedStencilClear, depthHasStencil);
 
-        frameManager.beginRenderPass(colorTargets, depthTarget);
+        FramebufferHooks.begin(frameManager, colorTargets, depthTarget);
         frameManager.setActiveLayoutHash(fbo.structuralLayoutHash);
     }
 

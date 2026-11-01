@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.Hashing;
 import org.lwjgl.sdl.SDL_GPUColorTargetInfo;
@@ -71,6 +72,7 @@ public final class FboState {
         h = Hashing.fmix64(h, depthLevel);
         if (h == 0L || h == FrameManager.FBO0_LAYOUT_HASH) h = 0xD1CE5EEDL;
         structuralLayoutHash = h;
+        FramebufferHooks.layout(this);
     }
 
     public void detachColor(int colorIdx) {

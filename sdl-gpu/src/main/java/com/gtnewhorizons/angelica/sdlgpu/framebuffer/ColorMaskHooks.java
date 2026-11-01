@@ -14,5 +14,4 @@ public final class ColorMaskHooks {
     public static long hash(long upstream) {
         return Hashing.fmix64(upstream, Subsystems.current().colorMasks().packed());
     }
-
 }

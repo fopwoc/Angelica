@@ -19,5 +19,4 @@ public final class BlendEquationHooks {
         var equations = Subsystems.current().blendEquations();
         return equations.indexed() ? Hashing.fmix64(upstream, equations.packed()) : upstream;
     }
-
 }

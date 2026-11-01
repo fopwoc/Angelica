@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.frame;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import com.gtnewhorizons.angelica.glsm.backend.BackendManager;
 import com.gtnewhorizons.angelica.glsm.backend.VSyncMode;
@@ -450,7 +451,7 @@ public final class FrameManager {
         endActiveEncoders(f, PASS_END_TARGET);
         if (preRenderPassHook != null) preRenderPassHook.run();
         assertNoEncoderActive(f, "SDL_BeginGPURenderPass");
-        f.renderPass = SDL_BeginGPURenderPass(f.commandBuffer, colorTargets, depthTarget);
+        f.renderPass = FramebufferHooks.beginNative(f.commandBuffer, colorTargets, depthTarget);
         if (f.renderPass == 0) {
             throw new RuntimeException("Failed to begin render pass: " + SDLError.SDL_GetError());
         }

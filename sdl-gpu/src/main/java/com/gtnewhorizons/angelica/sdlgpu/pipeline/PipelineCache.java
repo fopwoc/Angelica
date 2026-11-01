@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.BlendEquationHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.ColorMaskHooks;
 import org.apache.logging.log4j.LogManager;
@@ -77,7 +78,7 @@ public final class PipelineCache {
 
     public boolean stencilTestEnabled;
     public boolean effectiveStencilTestEnabled() {
-        return stencilTestEnabled && hasDepthTarget && PixelOps.isDepthStencilFormat(depthTargetFormat);
+        return FramebufferHooks.stencil(stencilTestEnabled) && hasDepthTarget && PixelOps.isDepthStencilFormat(depthTargetFormat);
     }
     public int stencilFrontCompareOp = SDL_GPU_COMPAREOP_ALWAYS;
     public int stencilFrontFailOp = SDL_GPU_STENCILOP_KEEP;
@@ -145,7 +146,8 @@ public final class PipelineCache {
     public boolean hasDepthTarget;
 
     public void setColorTargetFormats(int[] formats) {
-        this.colorTargetFormats = formats != null && formats.length > 0 ? formats : null;
+        // null selects the swapchain; an empty array is a real depth-only framebuffer.
+        this.colorTargetFormats = formats;
     }
 
     private int[] colorTargetFormats() {
@@ -359,8 +361,8 @@ public final class PipelineCache {
     }
 
     private long computeOutputHash() {
-        final boolean depthOn = depthTestEnabled && hasDepthTarget;
-        final boolean depthWriteOn = depthOn && depthWriteEnabled;
+        final boolean depthOn = FramebufferHooks.depth(depthTestEnabled) && hasDepthTarget;
+        final boolean depthWriteOn = depthOn && FramebufferHooks.depth(depthWriteEnabled);
         final boolean stencilOn = effectiveStencilTestEnabled();
         final int ctfLen = colorTargetFormats().length;
         int blendBits = 0;
@@ -508,11 +510,11 @@ public final class PipelineCache {
                     .enable_color_write_mask(true);
             }
 
-            final boolean depthOn = depthTestEnabled && hasDepthTarget;
+            final boolean depthOn = FramebufferHooks.depth(depthTestEnabled) && hasDepthTarget;
             final boolean stencilOn = effectiveStencilTestEnabled();
             final SDL_GPUDepthStencilState depthStencil = SDL_GPUDepthStencilState.calloc(stack)
                 .enable_depth_test(depthOn)
-                .enable_depth_write(depthOn && depthWriteEnabled)
+                .enable_depth_write(depthOn && FramebufferHooks.depth(depthWriteEnabled))
                 .compare_op(depthCompareOp)
                 .enable_stencil_test(stencilOn)
                 .compare_mask((byte) stencilCompareMask)

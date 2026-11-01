@@ -65,6 +65,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
   while outputs differ per index.
 - `PipelineCache`: `computeOutputHash` mixes in `ColorMaskHooks`/`BlendEquationHooks`, and `createPipelineInner` reads
   each color target's write mask and blend ops through them.
+- Framebuffer slices through `FramebufferHooks` (owned): `PipelineCache` gates its depth/stencil flags by attached
+  aspects and keeps an empty color-format array as a depth-only framebuffer; `FrameManager.beginRenderPass` begins
+  sparse targets natively; `PipelineApplier.ensureRenderPass` validates the draw, skips the dummy color target for
+  absent outputs, and begins through the slice-aware path; `FboState.recomputeTargets` records the slice layout;
+  `FBOClearTracker` compares slices and always rebuilds the pipeline color formats.
 
 ## Deleted on `pz`
 

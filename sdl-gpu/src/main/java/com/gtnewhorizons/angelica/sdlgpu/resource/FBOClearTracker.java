@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
 import com.gtnewhorizons.angelica.sdlgpu.resource.ResourceManager;
@@ -348,6 +349,7 @@ public final class FBOClearTracker {
     }
 
     public boolean fbosHaveSameAttachments(ContextState st, int a, int b) {
+        if (!FramebufferHooks.sameSlices(a, b)) return false;
         final FboState fa = resourceManager.getFbo(a);
         final FboState fb = resourceManager.getFbo(b);
         if (fa == null || fb == null) return false;
@@ -369,18 +371,6 @@ public final class FBOClearTracker {
     }
 
     public void updatePipelineCacheColorFormats(ContextState st, FboState fbo) {
-        final boolean reshape = fbo.cachedColorFormats == null || fbo.cachedColorFormats.length != fbo.drawBuffers.length;
-        if (fbo.cachedFormatsDirty || reshape) {
-            if (reshape) fbo.cachedColorFormats = new int[fbo.drawBuffers.length];
-            final int[] formats = fbo.cachedColorFormats;
-            for (int i = 0; i < formats.length; i++) {
-                final int db = fbo.drawBuffers[i];
-                formats[i] = (db >= 0 && db < ContextState.MAX_COLOR_ATTACHMENTS) ? fbo.colorFormats[db] : SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-            }
-            fbo.cachedFormatsDirty = false;
-        }
-        st.pipeline.setColorTargetFormats(fbo.cachedColorFormats);
-        st.pipeline.setDrawBuffers(fbo.drawBuffers);
-        st.pipeline.setFboDebug(st.boundFboId, fbo.colorAttachmentCount);
+        FramebufferHooks.formats(st, fbo);
     }
 }
