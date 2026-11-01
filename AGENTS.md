@@ -29,6 +29,11 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
 - `sdlgpu.extension` binds the native SDL extensions built from `sdl-gpu/native`.
+- `sdlgpu.compat.GlDispatch` releases fabricated GL capabilities/provider state when the host closes its runtime.
+- `glsm.redirect.lwjgl3.Lwjgl3Redirects` owns generic GL routing after the base redirector. `RendererEndpoint` names
+  the public renderer ABI without loading execution classes; consumers add their own isolation adapters afterward.
+- `sdlgpu.frame.DefaultTarget`, `InitialFrame`, and `FrameCommands` own framebuffer resize, initial presentation,
+  aborted recordings, and upload/arena teardown. `HostedBackend.shutdown` cancels pending recordings itself.
 
 ## Zones
 
@@ -131,3 +136,4 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - Minecraft splash presentation: `SplashDispatcher`, its backend target/dispatch/teardown branches,
   `FrameManager.presentSplash`, and their splash-only tests. Normal offscreen presentation remains.
 - LWJGL2-only `GLU`, `Project`, and `Util.checkGLError` redirector entries; LWJGL3 does not expose those classes.
+- Metal HUD integration: native implementation, build include, and its direct-symbol bypass were removed.

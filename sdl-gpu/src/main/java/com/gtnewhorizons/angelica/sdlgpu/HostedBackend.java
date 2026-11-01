@@ -33,13 +33,13 @@ import static org.lwjgl.opengl.GL43.GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT;
 
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
 import com.gtnewhorizons.angelica.glsm.backend.BackendOptions;
-import com.gtnewhorizons.angelica.sdlgpu.SDLGPUGate;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
-import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
-import com.gtnewhorizons.angelica.sdlgpu.util.DebugMessageRelay;
+import com.gtnewhorizons.angelica.sdlgpu.frame.FrameCommands;
 import com.gtnewhorizons.angelica.sdlgpu.layer.ShaderLayer;
+import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
 import com.gtnewhorizons.angelica.sdlgpu.shader.SamplerResources;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureBindings;
+import com.gtnewhorizons.angelica.sdlgpu.util.DebugMessageRelay;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -214,6 +214,7 @@ public final class HostedBackend extends ShaderLayer {
 
     @Override
     public void shutdown() {
+        FrameCommands.cancelPending();
         // The upstream relay is static and would otherwise retain the host callback after device shutdown.
         DebugMessageRelay.setListener(null, 0L, false);
         try {

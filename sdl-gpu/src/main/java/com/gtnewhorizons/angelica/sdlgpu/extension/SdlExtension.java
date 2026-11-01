@@ -15,23 +15,16 @@ public final class SdlExtension {
     private SdlExtension() {}
 
     public static long symbol(String name) {
-        if (!name.equals("JULIA_SDL_PrepareDeveloperHud") && !name.equals("JULIA_SDL_ShowDeveloperHud")) {
-            long device = SDLGPUGate.device().getDevice();
-            if (device == 0)
-                throw new IllegalStateException("Native GPU extension requested before device creation: " + name);
-            long lookup = SDL.getLibrary().getFunctionAddress("JULIA_SDL_GetExtension");
-            if (lookup == 0)
-                throw new UnsupportedOperationException("Julia's SDL build lacks backend extension dispatch");
-            try (var stack = MemoryStack.stackPush()) {
-                long address = JNI.invokePPP(device, MemoryUtil.memAddress(stack.UTF8(name)), lookup);
-                if (address == 0) throw new UnsupportedOperationException(Sdl.failure("Resolve " + name));
-                return address;
-            }
+        long device = SDLGPUGate.device().getDevice();
+        if (device == 0)
+            throw new IllegalStateException("Native GPU extension requested before device creation: " + name);
+        long lookup = SDL.getLibrary().getFunctionAddress("JULIA_SDL_GetExtension");
+        if (lookup == 0) throw new UnsupportedOperationException("Julia's SDL build lacks backend extension dispatch");
+        try (var stack = MemoryStack.stackPush()) {
+            long address = JNI.invokePPP(device, MemoryUtil.memAddress(stack.UTF8(name)), lookup);
+            if (address == 0) throw new UnsupportedOperationException(Sdl.failure("Resolve " + name));
+            return address;
         }
-        long address = SDL.getLibrary().getFunctionAddress(name);
-        if (address == 0)
-            throw new UnsupportedOperationException("Julia's SDL build does not export native extension " + name);
-        return address;
     }
 
     public static void requireAbi(String name, int version) {
