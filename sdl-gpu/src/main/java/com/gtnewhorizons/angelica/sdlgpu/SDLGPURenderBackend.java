@@ -25,7 +25,6 @@ import com.gtnewhorizons.angelica.glsm.texture.TextureInfoCache;
 import com.gtnewhorizons.angelica.glsm.texture.TextureStaging;
 import com.gtnewhorizons.angelica.sdlgpu.compute.ComputeBinder;
 import com.gtnewhorizons.angelica.sdlgpu.device.Device;
-import com.gtnewhorizons.angelica.sdlgpu.device.SDLDrawable;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FenceTracker;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -120,10 +119,8 @@ import org.lwjgl.sdl.SDL_GPUTextureLocation;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Pointer;
-import org.lwjglx.opengl.Display;
 
 import com.gtnewhorizons.angelica.sdlgpu.compat.Lwjgl3GLCapabilitiesShim;
-import me.eigenraven.lwjgl3ify.api.GLCapabilitiesOverride;
 
 import static org.lwjgl.sdl.SDLGPU.*;
 import static org.lwjgl.sdl.SDLSurface.SDL_FLIP_HORIZONTAL;
@@ -377,8 +374,8 @@ public class SDLGPURenderBackend extends RenderBackend {
         }
 
         if (hasWindow()) {
-            final int splashW = Math.max(1, Display.getWidth());
-            final int splashH = Math.max(1, Display.getHeight());
+            final int splashW = Math.max(1, device.windowSource().width());
+            final int splashH = Math.max(1, device.windowSource().height());
             final int[] maxDesktop = device.getMaxDesktopSizePixels();
             final int splashTexW = Math.max(splashW, maxDesktop[0]);
             final int splashTexH = Math.max(splashH, maxDesktop[1]);
@@ -457,8 +454,6 @@ public class SDLGPURenderBackend extends RenderBackend {
     }
 
     private void populateGLCapabilities() {
-        final Set<String> caps = advertisedCapabilities();
-        GLCapabilitiesOverride.set(caps);
         cachedExtensions = String.join(" ", ADVERTISED_EXTENSIONS);
 
         LOG.info("Populated GL capabilities for SDL GPU backend");
@@ -617,49 +612,10 @@ public class SDLGPURenderBackend extends RenderBackend {
         }
     }
 
-    @Override public boolean handleMakeCurrent(Object drawable) {
-        if (!isSDLManagedDrawable(drawable)) return false;
-        Lwjgl3GLCapabilitiesShim.installOnCurrentThread(advertisedCapabilities());
-        enterContext(drawable instanceof SDLDrawable);
-        return true;
-    }
-
-    private void enterContext(boolean displayDrawable) {
-        final ContextState st = s();
-        final GLContextState ctx = GLStateManager.ctx();
-        if (st.mirroredContext != ctx) {
-            st.invalidateMirror();
-            st.mirroredContext = ctx;
-        }
-        final OffscreenTarget splash = splashTarget;
-        final boolean splashContext = displayDrawable && splash != null && Thread.currentThread() != GLStateManager.getMainThread();
-        st.defaultFboId = splashContext ? splash.fboId() : 0;
-        if (splashContext && !frameManager.isFrameActive()) {
-            beginSplashFrame();
-        } else if (st.needsSeed) {
-            st.needsSeed = false;
-            GLSMAttribStack.replayStateToBackend();
-        }
-    }
-
     private void beginSplashFrame() {
         frameManager.beginFrame();
         beginFrameInit();
         frameManager.frame().swapchainUnavailable = true;
-    }
-
-    @Override public boolean handleReleaseContext(Object drawable) {
-        if (!isSDLManagedDrawable(drawable)) return false;
-        if (Thread.currentThread() == GLStateManager.getMainThread()) return true;
-        Lwjgl3GLCapabilitiesShim.clearOnCurrentThread();
-        onRenderThreadReleased(Thread.currentThread());
-        return true;
-    }
-
-    private static boolean isSDLManagedDrawable(Object drawable) {
-        if (drawable == null) return false;
-        if (drawable instanceof SDLDrawable) return true;
-        return SDLGPUDisplayBridge.isSdlSharedDrawable(drawable);
     }
 
     @Override public boolean handleSwapBuffers() {

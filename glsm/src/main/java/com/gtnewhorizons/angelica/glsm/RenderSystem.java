@@ -24,7 +24,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL42;
 import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.NVXGpuMemoryInfo;
+import org.lwjgl.opengl.NVXGPUMemoryInfo;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -645,7 +645,7 @@ public class RenderSystem {
 
     public static long getVRAM() {
         if (GLStateManager.capabilities.GL_NVX_gpu_memory_info) {
-            return RENDER_BACKEND.getInteger(NVXGpuMemoryInfo.GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX) * 1024L;
+            return RENDER_BACKEND.getInteger(NVXGPUMemoryInfo.GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX) * 1024L;
         } else {
             // Default to 4GB if we can't query VRAM
             return 4294967296L;

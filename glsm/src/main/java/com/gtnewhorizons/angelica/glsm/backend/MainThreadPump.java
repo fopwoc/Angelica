@@ -3,8 +3,6 @@ package com.gtnewhorizons.angelica.glsm.backend;
 import com.gtnewhorizons.angelica.glsm.profiling.Tracy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
@@ -17,11 +15,6 @@ public final class MainThreadPump {
 
     private static final long PARK_MILLIS = 20L;
     private static final long STALL_WARN_NANOS = 5_000_000_000L;
-
-    public static void pollInput() {
-        Keyboard.poll();
-        Mouse.poll();
-    }
 
     private final Executor mainExecutor;
     private final BooleanSupplier isMainThread;

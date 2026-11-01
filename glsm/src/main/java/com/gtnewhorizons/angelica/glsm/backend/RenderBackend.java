@@ -6,8 +6,6 @@ import com.gtnewhorizons.angelica.glsm.GLSMAttribStack;
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
 import com.gtnewhorizons.angelica.glsm.RenderSystem;
 import com.gtnewhorizons.angelica.glsm.texture.TextureStaging;
-import org.lwjgl.LWJGLException;
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL20;
@@ -238,9 +236,8 @@ public abstract class RenderBackend {
         LockSupport.parkNanos(nanos);
     }
 
-    public void pumpDisplayMessages() {
-        Display.processMessages();
-    }
+    /** The application owns the window and its event loop; backends that present off-thread override this. */
+    public void pumpDisplayMessages() {}
 
     private boolean presentSuppressed;
 
@@ -261,17 +258,9 @@ public abstract class RenderBackend {
     /** Fired by lwjgl3ify Display before a mutation that recreates the swapchain. */
     public void onPreSwapchainInvalidatingChange(Object change) { bumpDisplayGeneration(); }
 
-    public boolean handleMakeCurrent(Object drawable) { return false; }
-    public boolean handleReleaseContext(Object drawable) { return false; }
     public boolean handleSwapBuffers() { return false; }
     public void onRenderThreadReleased(Thread thread) {}
 
-    public void updateDisplayFromWorkerThread(boolean processMessages) throws LWJGLException {
-        GLStateManager.swapBuffers();
-        if (processMessages) {
-            pumpDisplayMessages();
-        }
-    }
 
     public String getTransferDebugInfo() { return null; }
 

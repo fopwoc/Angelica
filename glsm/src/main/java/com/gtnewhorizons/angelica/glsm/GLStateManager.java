@@ -18,17 +18,14 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.LWJGLException;
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.Drawable;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
-import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.GLCapabilities;
 
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -218,22 +215,6 @@ public class GLStateManager {
         bindThreadContext(null);
     }
 
-    private static GLContextState contextFor(Drawable drawable) {
-        synchronized (GLStateManager.class) {
-            GLContextState st = drawableContexts.get(drawable);
-            if (st == null) {
-                st = newContext();
-                setDrawableSize(st, Display.getWidth(), Display.getHeight());
-                applyStencilBitMask(st, primaryContext().stencilBitMask);
-                drawableContexts.put(drawable, st);
-                final GLContextState[] states = Arrays.copyOf(drawableContextStates, drawableContextStates.length + 1);
-                states[states.length - 1] = st;
-                drawableContextStates = states;
-            }
-            return st;
-        }
-    }
-
     private static void setDrawableSize(GLContextState c, int w, int h) {
         mod(c.viewportState).setViewPort(0, 0, w, h);
         mod(c.scissorState).setScissor(0, 0, w, h);
@@ -245,10 +226,6 @@ public class GLStateManager {
         c.stencilState.setValueMaskBack(mask);
         c.stencilState.setWriteMaskFront(mask);
         c.stencilState.setWriteMaskBack(mask);
-    }
-
-    private static boolean isDisplayDrawable(Drawable d) {
-        return d == Display.getDrawable();
     }
 
     // Thread Checking - must be early in static init order so isMainThread() works for state initialization
@@ -266,7 +243,7 @@ public class GLStateManager {
 
     @Getter static GLSMInitConfig initConfig;
 
-    public static ContextCapabilities capabilities;
+    public static GLCapabilities capabilities;
 
     // Software stack depths for FFP emulation
     public static final int MAX_ATTRIB_STACK_DEPTH = 32;
@@ -287,14 +264,10 @@ public class GLStateManager {
 
     @Getter private static boolean windows;
 
-    private static volatile Thread CurrentThread = MainThread;
     @Setter @Getter private static boolean runningSplash = true;
 
     static volatile boolean splashComplete = false;
-    private static volatile Thread splashDisplayReleaser;
     @Getter @Setter private static volatile Thread drawableGLHolder = MainThread;
-    // Reference to DrawableGL (main display context) - works with both FML and BLS splash
-    @Setter private static volatile Drawable drawableGL = null;
 
     private static final ReentrantLock DRAW_LOCK = new ReentrantLock();
 
@@ -401,14 +374,12 @@ public class GLStateManager {
 
     public static void initialize(GLSMInitConfig config) {
         initConfig = config;
-        final int width = config.getDisplayWidth() > 0 ? config.getDisplayWidth() : Display.getWidth();
-        final int height = config.getDisplayHeight() > 0 ? config.getDisplayHeight() : Display.getHeight();
-        preInit(width, height);
+        preInit(config.getDisplayWidth(), config.getDisplayHeight());
         init(config.getPostInitCallback());
     }
 
     static void preInit(int displayWidth, int displayHeight) {
-        capabilities = GLContext.getCapabilities();
+        capabilities = GL.getCapabilities();
         HAS_MULTIPLE_SET
             .addFeature(GL11.GL_ACCUM_CLEAR_VALUE)
             .addFeature(GL14.GL_BLEND_COLOR)
@@ -535,85 +506,8 @@ public class GLStateManager {
         return ctx().foreignDrawDepth > 0;
     }
 
-    public static void makeCurrent(Drawable drawable) throws LWJGLException {
-        final GLContextState previous = tlWorkerContext.get();
-        final boolean changed = bindThreadContext(isDisplayDrawable(drawable) ? null : contextFor(drawable));
-        final boolean handled;
-        try {
-            handled = BackendManager.RENDER_BACKEND != null && BackendManager.RENDER_BACKEND.handleMakeCurrent(drawable);
-            if (!handled) drawable.makeCurrent();
-        } catch (Exception | Error failure) {
-            if (changed) bindThreadContext(previous);
-            throw failure;
-        }
-        if (!handled && changed) GLSMAttribStack.replayStateToBackend();
-        CurrentThread = Thread.currentThread();
-
-        if (splashComplete) return;
-        if (Thread.currentThread() == MainThread && isDisplayDrawable(drawable)) {
-            final Thread r = splashDisplayReleaser;
-            if (r != null && !r.isAlive()) {
-                markSplashComplete("splashThreadExit");
-                return;
-            }
-        }
-
-        if (drawableGL == null && isDisplayDrawable(drawable)) drawableGL = drawable;
-
-        if (drawableGL != null && drawable == drawableGL) {
-            // Switching TO DrawableGL - enable caching for this thread
-            drawableGLHolder = CurrentThread;
-        } else if (drawableGLHolder == CurrentThread) {
-            // This thread held DrawableGL but is switching AWAY - disable caching
-            drawableGLHolder = null;
-        }
-        // else: Thread switching to non-DrawableGL, wasn't holder - no change needed
-    }
-
-    public static void releaseContext(Drawable drawable) throws LWJGLException {
-        final boolean handled = BackendManager.RENDER_BACKEND != null && BackendManager.RENDER_BACKEND.handleReleaseContext(drawable);
-        if (!handled) {
-            drawable.releaseContext();
-        }
-        bindThreadContext(null);
-        if (drawableGLHolder == Thread.currentThread()) {
-            drawableGLHolder = null;
-        }
-        if (!splashComplete && Thread.currentThread() != MainThread && isDisplayDrawable(drawable)) {
-            splashDisplayReleaser = Thread.currentThread();
-        }
-    }
-
     public static boolean isCurrent() {
         return RENDER_BACKEND.isCurrent();
-    }
-
-    public static void swapBuffers() throws LWJGLException {
-        if (RENDER_BACKEND.handleSwapBuffers()) {
-            return;
-        }
-        Display.swapBuffers();
-    }
-
-    public static void updateDisplay() throws LWJGLException {
-        updateDisplay(true);
-    }
-
-    public static void updateDisplay(boolean processMessages) throws LWJGLException {
-        if (Thread.currentThread() != MainThread) {
-            RENDER_BACKEND.updateDisplayFromWorkerThread(processMessages);
-            return;
-        }
-        if (processMessages) pumpDisplayMessages();
-        if (!RENDER_BACKEND.wantsDisplayUpdateGateTiming()) {
-            Display.update(false);
-            return;
-        }
-        final long start = System.nanoTime();
-        Display.update(false);
-        final long end = System.nanoTime();
-        RENDER_BACKEND.recordGate(end - start, end);
-        GLSMFramebuffer.armFirstClear();
     }
 
     /**
@@ -625,7 +519,6 @@ public class GLStateManager {
         splashComplete = true;
         stateSeedPending = true;
         drawableGLHolder = null;
-        drawableGL = null;
         ImmediateModeRecorder.cleanupOrphanTessellators();
         if (GLSMHooks.LOADING_CHECKPOINT.hasListeners()) {
             GLSMHooks.loadingCheckpointEvent.requiresSync = true;

@@ -15,7 +15,6 @@ import com.gtnewhorizons.angelica.glsm.streaming.TessellatorStreamingDrawer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL32;
-import org.lwjgl.opengl.KHRDebugCallback;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -658,10 +657,6 @@ public final class GLSMDraws {
 
     public static void registerDebugMessageListener(GLDebugMessageListener listener, long userParam) {
         RENDER_BACKEND.debugMessageCallback(listener, userParam);
-    }
-
-    public static void glDebugMessageCallback(KHRDebugCallback callback) {
-        RENDER_BACKEND.debugMessageCallback(GLDebug.adaptDebugCallback(callback), 0L);
     }
 
     public static void glAccum(int op, float value) {

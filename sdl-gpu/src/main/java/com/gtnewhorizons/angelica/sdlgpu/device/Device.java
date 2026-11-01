@@ -21,11 +21,11 @@ import org.lwjgl.sdl.SDLVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
-import org.lwjglx.opengl.Display;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static org.lwjgl.sdl.SDLGPU.*;
@@ -45,6 +45,7 @@ public final class Device {
 
     private long device;
     private boolean claimed;
+    private volatile WindowSource windowSource = WindowSource.NONE;
     private int supportedShaderFormats;
     private String driverName;
     private boolean fencePollEnabled;
@@ -221,6 +222,11 @@ public final class Device {
         return 0;
     }
 
+    /** Install before claiming the window; the renderer reads the application's window only through it. */
+    public void setWindowSource(WindowSource source) { windowSource = Objects.requireNonNull(source); }
+
+    public WindowSource windowSource() { return windowSource; }
+
     public void claimWindow(long window) {
         if (device == 0) {
             throw new IllegalStateException("SDL GPU device not created");
@@ -280,7 +286,7 @@ public final class Device {
     public void destroyDevice() {
         if (device == 0) return;
         if (claimed) {
-            final long window = Display.getWindow();
+            final long window = windowSource.window();
             if (window != 0) SDL_ReleaseWindowFromGPUDevice(device, window);
             claimed = false;
         }
@@ -428,7 +434,7 @@ public final class Device {
 
     public VSyncMode applyVSync(VSyncMode preferred) {
         if (device == 0 || !claimed) return vsyncMode;
-        final long window = Display.getWindow();
+        final long window = windowSource.window();
         final List<VSyncMode> order = presentModeOrder(preferred);
         for (VSyncMode candidate : order) {
             final int sdlMode = toSdl(candidate);
@@ -453,15 +459,15 @@ public final class Device {
     }
 
     public boolean supportsVSyncMode(VSyncMode mode) {
-        return device != 0 && claimed && SDL_WindowSupportsGPUPresentMode(device, Display.getWindow(), toSdl(mode));
+        return device != 0 && claimed && SDL_WindowSupportsGPUPresentMode(device, windowSource.window(), toSdl(mode));
     }
 
     public long getClaimedWindow() {
-        return device != 0 && claimed ? Display.getWindow() : 0L;
+        return device != 0 && claimed ? windowSource.window() : 0L;
     }
 
     public boolean wasWindowResized() {
-        return getClaimedWindow() != 0L && Display.wasResized();
+        return getClaimedWindow() != 0L && windowSource.wasResized();
     }
 
     public long getWindowSizeInPixels() {
@@ -471,7 +477,7 @@ public final class Device {
             final IntBuffer w = stack.mallocInt(1);
             final IntBuffer h = stack.mallocInt(1);
             SDL_GetWindowSizeInPixels(window, w, h);
-            return ((long) w.get(0) << 32) | (h.get(0) & 0xFFFFFFFFL);
+            return windowSource.renderSize(((long) w.get(0) << 32) | (h.get(0) & 0xFFFFFFFFL));
         }
     }
 
@@ -484,7 +490,7 @@ public final class Device {
     }
 
     public long getDisplayRefreshPeriodNanos() {
-        final long window = Display.getWindow();
+        final long window = windowSource.window();
         final int displayId = window == 0 ? SDL_GetPrimaryDisplay() : SDL_GetDisplayForWindow(window);
         if (displayId == 0) return 0L;
         final SDL_DisplayMode mode = SDL_GetCurrentDisplayMode(displayId);
@@ -493,7 +499,7 @@ public final class Device {
     }
 
     public int getSwapchainTextureFormat() {
-        final long window = Display.getWindow();
+        final long window = windowSource.window();
         return SDL_GetGPUSwapchainTextureFormat(device, window);
     }
 

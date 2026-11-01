@@ -1,7 +1,6 @@
 package com.gtnewhorizons.angelica.glsm.shader;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import me.eigenraven.lwjgl3ify.api.Lwjgl3Aware;
 import org.lwjgl.Version;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.SharedLibrary;
@@ -15,8 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
-
-@Lwjgl3Aware
 public final class ShaderCacheIO {
 
     private ShaderCacheIO() {}

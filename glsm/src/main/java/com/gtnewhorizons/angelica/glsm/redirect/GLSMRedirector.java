@@ -129,13 +129,6 @@ public class GLSMRedirector {
         }
     }
 
-    private static final String Drawable = "org/lwjgl/opengl/Drawable";
-    private static final String SharedDrawable = "org/lwjgl/opengl/SharedDrawable";
-    private static final String Display = "org/lwjgl/opengl/Display";
-
-    private static boolean isDrawableOwner(String owner) {
-        return owner.startsWith(Drawable) || owner.equals(SharedDrawable);
-    }
     private static final String GLStateManager = "com/gtnewhorizons/angelica/glsm/GLStateManager";
     private static final String AwareGLDebugShim = "com/gtnewhorizons/angelica/sdlgpu/compat/AwareGLDebugShim";
     private static final Map<String, String> awareOwnerRedirects = new HashMap<>();
@@ -192,7 +185,6 @@ public class GLSMRedirector {
     private static final String[] CONSTANT_POOL_SEARCH_STRINGS;
     private static final Map<String, String> methodOwner = new HashMap<>(512);
     private static final Map<String, String> fieldOwner = new HashMap<>(64);
-    static final String[] CORE_REWRITE_TARGETS = {"makeCurrent", "releaseContext", "swapBuffers", "updateDisplay", "isCurrent"};
     private static final Set<String> LEGACY_WARNED = ConcurrentHashMap.newKeySet();
     private String legacyHint = "";
     private LegacyRewriter legacyRewriter;
@@ -718,7 +710,6 @@ public class GLSMRedirector {
             glDescRedirects.put(o + " glDebugMessageInsert(IIIILjava/lang/CharSequence;)V", "glDebugMessageInsert");
             glDescRedirects.put(o + " glDebugMessageControl(IIILjava/nio/IntBuffer;Z)V", "glDebugMessageControl");
             glDescRedirects.put(o + " glGetDebugMessageLog(ILjava/nio/IntBuffer;Ljava/nio/IntBuffer;Ljava/nio/IntBuffer;Ljava/nio/IntBuffer;Ljava/nio/IntBuffer;Ljava/nio/ByteBuffer;)I", "glGetDebugMessageLog");
-            glDescRedirects.put(o + " glDebugMessageCallback(Lorg/lwjgl/opengl/KHRDebugCallback;)V", "glDebugMessageCallback");
             awareOwnerRedirects.put(o + " glDebugMessageCallback(Lorg/lwjgl/opengl/GLDebugMessageCallbackI;J)V", AwareGLDebugShim);
         }
 
@@ -901,17 +892,8 @@ public class GLSMRedirector {
         // Must honor disableErrorChecks like glGetError, or it throws on errors those checks left latched
         methodRedirects.put("org/lwjgl/opengl/Util", RedirectMap.newMap().add("checkGLError"));
 
-        // Quadric type replacements
-        typeRedirects.put("org/lwjgl/util/glu/Sphere", "com/gtnewhorizons/angelica/glsm/compat/lwjgl/AngelicaSphere");
-        typeRedirects.put("org/lwjgl/util/glu/Cylinder", "com/gtnewhorizons/angelica/glsm/compat/lwjgl/AngelicaCylinder");
-        typeRedirects.put("org/lwjgl/util/glu/Disk", "com/gtnewhorizons/angelica/glsm/compat/lwjgl/AngelicaDisk");
-        typeRedirects.put("org/lwjgl/util/glu/PartialDisk", "com/gtnewhorizons/angelica/glsm/compat/lwjgl/AngelicaPartialDisk");
-
         final List<String> stringsToSearch = new ArrayList<>(32);
         stringsToSearch.add(LWJGL_GL_PACKAGE);
-        stringsToSearch.add(Drawable);
-        stringsToSearch.add(SharedDrawable);
-        stringsToSearch.add(Display);
         stringsToSearch.add(GLStateManager);
         stringsToSearch.addAll(typeRedirects.keySet());
         stringsToSearch.addAll(methodRedirects.keySet());
@@ -938,7 +920,6 @@ public class GLSMRedirector {
         }
         targets.add("glEnable");
         targets.add("glDisable");
-        Collections.addAll(targets, CORE_REWRITE_TARGETS);
         return targets;
     }
 
@@ -1084,43 +1065,6 @@ public class GLSMRedirector {
                             mn.instructions.remove(prevNode);
                         }
                         changed = true;
-                    } else if (mNode.name.equals("makeCurrent") && isDrawableOwner(mNode.owner)) {
-                        mNode.setOpcode(Opcodes.INVOKESTATIC);
-                        mNode.owner = GLStateManager;
-                        mNode.desc = "(L" + Drawable + ";)V";
-                        mNode.itf = false;
-                        changed = true;
-                        if (LOG_SPAM) {
-                            LOGGER.info("Redirecting call in {} to GLStateManager.makeCurrent()", transformedName);
-                        }
-                    } else if (mNode.name.equals("releaseContext") && isDrawableOwner(mNode.owner)) {
-                        mNode.setOpcode(Opcodes.INVOKESTATIC);
-                        mNode.owner = GLStateManager;
-                        mNode.desc = "(L" + Drawable + ";)V";
-                        mNode.itf = false;
-                        changed = true;
-                        if (LOG_SPAM) {
-                            LOGGER.info("Redirecting call in {} to GLStateManager.releaseContext()", transformedName);
-                        }
-                    } else if (mNode.name.equals("swapBuffers") && mNode.owner.equals(Display) && mNode.desc.equals("()V")) {
-                        mNode.owner = GLStateManager;
-                        changed = true;
-                        if (LOG_SPAM) {
-                            LOGGER.info("Redirecting call in {} to GLStateManager.swapBuffers()", transformedName);
-                        }
-                    } else if (mNode.name.equals("update") && mNode.owner.equals(Display) && (mNode.desc.equals("()V") || mNode.desc.equals("(Z)V"))) {
-                        mNode.owner = GLStateManager;
-                        mNode.name = "updateDisplay";
-                        changed = true;
-                        if (LOG_SPAM) {
-                            LOGGER.info("Redirecting call in {} to GLStateManager.updateDisplay{}", transformedName, mNode.desc);
-                        }
-                    } else if (mNode.name.equals("isCurrent") && mNode.owner.equals(Display) && mNode.desc.equals("()Z")) {
-                        mNode.owner = GLStateManager;
-                        changed = true;
-                        if (LOG_SPAM) {
-                            LOGGER.info("Redirecting call in {} to GLStateManager.isCurrent()", transformedName);
-                        }
                     } else {
                         String glsmName = glDescRedirects.get(mNode.owner + " " + mNode.name + mNode.desc);
                         if (glsmName == null) {

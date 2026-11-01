@@ -2,7 +2,6 @@ package com.gtnewhorizons.angelica.glsm.shader;
 
 import com.gtnewhorizons.angelica.glsm.GlslTransformUtils;
 import com.gtnewhorizons.angelica.glsm.shader.GlslVulkanPreprocess.Edit;
-import me.eigenraven.lwjgl3ify.api.Lwjgl3Aware;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -36,7 +35,6 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
 /** GLSL 330 core -> SPIR-V -> GLSL ES 320 via shaderc + SPIRV-Cross */
-@Lwjgl3Aware
 public final class SpirvShaderTranslator {
 
     private static final Logger LOGGER = LogManager.getLogger("SpirvShaderTranslator");

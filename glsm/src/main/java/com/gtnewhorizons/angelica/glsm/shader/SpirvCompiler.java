@@ -1,7 +1,6 @@
 package com.gtnewhorizons.angelica.glsm.shader;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import me.eigenraven.lwjgl3ify.api.Lwjgl3Aware;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,6 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 /** GLSL -> SPIR-V via shaderc */
-@Lwjgl3Aware
 public final class SpirvCompiler {
     private static final Logger LOGGER = LogManager.getLogger("SpirvCompiler");
 
@@ -34,8 +32,6 @@ public final class SpirvCompiler {
 
     private static final int CACHE_MAX = 256;
     private static final Object2ObjectLinkedOpenHashMap<CacheKey, byte[]> CACHE = new Object2ObjectLinkedOpenHashMap<>();
-
-    @Lwjgl3Aware
     private static final class Toolchain {
         static final String ID = ShaderCacheIO.libraryId(Shaderc.getLibrary());
     }

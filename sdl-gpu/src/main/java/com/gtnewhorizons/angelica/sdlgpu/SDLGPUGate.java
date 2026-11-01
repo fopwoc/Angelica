@@ -24,10 +24,6 @@ public final class SDLGPUGate {
         return BackendManager.RENDER_BACKEND instanceof SDLGPURenderBackend;
     }
 
-    public static void ensureDrawableInstalled() {
-        if (isActive()) SDLGPUDisplayBridge.ensureDrawableInstalled();
-    }
-
     public static void prewarmSpirv(String source, int shaderType) {
         if (isActive()) ShaderManager.prewarmSpirv(source, shaderType);
     }

@@ -7,7 +7,6 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.GLU;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
@@ -432,8 +431,13 @@ public final class GLSMMatrices {
         glScalef(viewport.get(viewport.position() + 2) / deltaX, viewport.get(viewport.position() + 3) / deltaY, 1.0f);
     }
 
+    // GLU error codes; LWJGL3 ships no GLU binding.
+    private static final int GLU_INVALID_ENUM = 100900;
+    private static final int GLU_INVALID_VALUE = 100901;
+    private static final int GLU_OUT_OF_MEMORY = 100902;
+
     public static int gluBuild2DMipmaps(int target, int components, int width, int height, int format, int type, ByteBuffer data) {
-        if (width < 1 || height < 1) return GLU.GLU_INVALID_VALUE;
+        if (width < 1 || height < 1) return GLU_INVALID_VALUE;
         GLSMTextures.glTexImage2D(target, 0, components, width, height, 0, format, type, data);
         GLSMTextures.glGenerateMipmap(target);
         return 0;
@@ -441,9 +445,9 @@ public final class GLSMMatrices {
 
     public static String gluErrorString(int errorCode) {
         return switch (errorCode) {
-            case GLU.GLU_INVALID_ENUM -> "Invalid enum (glu)";
-            case GLU.GLU_INVALID_VALUE -> "Invalid value (glu)";
-            case GLU.GLU_OUT_OF_MEMORY -> "Out of memory (glu)";
+            case GLU_INVALID_ENUM -> "Invalid enum (glu)";
+            case GLU_INVALID_VALUE -> "Invalid value (glu)";
+            case GLU_OUT_OF_MEMORY -> "Out of memory (glu)";
             case GL11.GL_NO_ERROR -> "No error";
             case GL11.GL_INVALID_ENUM -> "Invalid enum";
             case GL11.GL_INVALID_VALUE -> "Invalid value";
