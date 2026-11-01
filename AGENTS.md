@@ -1,7 +1,7 @@
 # Angelica, `pz` branch
 
 This branch is the renderer for [Julia](https://github.com/fopwoc/julia-pz), a Project Zomboid mod. Only `glsm`,
-`sdl-gpu`, the patched SDL build in `sdl-gpu/native`, and the GTNHLib subset in `third_party/gtnhlib` matter here.
+`sdl-gpu`, `renderer-tests`, the patched SDL build in `sdl-gpu/native`, and the GTNHLib subset in `third_party/gtnhlib` matter here.
 Julia compiles them with its own Gradle build and keeps the build trees outside the fork. Every other module is left
 untouched and unbuilt, and may stop compiling. Minecraft compatibility is not preserved, and the renderer targets
 LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
@@ -44,7 +44,9 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
 - Tracked files keep upstream's formatting and log4j loggers. Owned files came from Julia and keep its formatting and
   `System.Logger`.
 - Use comments for non-obvious reasoning only. Javadoc a class when its role isn't evident from its name.
-- The fork's test trees are not compiled by Julia's build yet; moved tests live beside their classes for when they are.
+- Fork-owned renderer regressions live in `renderer-tests/src/test`, separate from upstream's `glsm/src/test` and
+  `sdl-gpu/src/test`. Julia's `:renderer-tests` module builds them; upstream test trees remain untouched and unwired.
+  Keep CPU tests independent of Julia and PZ. Device/window tests require a separate explicit task and user request.
 
 ## Hooks in tracked files
 

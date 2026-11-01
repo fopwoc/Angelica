@@ -17,6 +17,8 @@ What lives here:
 - `glsm/` and `sdl-gpu/`: the renderer, LWJGL3 only. Julia's GL backend, its bridges, and the GL features SDL GPU
   lacks are part of these modules, not bytecode patches applied from outside.
 - `sdl-gpu/native/`: the patched SDL 3 build with the renderer's native GPU extensions.
+- `renderer-tests/`: our renderer regressions, kept separate from upstream tests. Julia's build runs them with
+  `./java/gradlew -p java :renderer-tests:test` from its repository root; no GPU device or window is created.
 - `third_party/gtnhlib/`: a [GTNHLib fork](https://github.com/fopwoc/GTNHLib) of which only the vertex, buffer and
   tessellator classes `glsm` uses are compiled.
 
