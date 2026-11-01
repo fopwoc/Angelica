@@ -1,5 +1,9 @@
 package com.gtnewhorizons.angelica.sdlgpu;
 
+import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
+
 import com.gtnewhorizons.angelica.glsm.hooks.GLSMHooks;
 import com.gtnewhorizons.angelica.sdlgpu.compute.VertexWriteReplayer;
 import com.gtnewhorizons.angelica.sdlgpu.compute.VoxelizationDispatcher;
@@ -14,8 +18,6 @@ import com.gtnewhorizons.angelica.glsm.backend.BackendOptions;
 import com.gtnewhorizons.angelica.glsm.backend.GLDebugMessageListener;
 import com.gtnewhorizons.angelica.glsm.backend.MainThreadPump;
 import com.gtnewhorizons.angelica.glsm.backend.VertexWriteReplaySetup;
-import me.eigenraven.lwjgl3ify.client.MainThreadExec;
-import org.lwjglx.Lwjgl3ifyEventLoop;
 import com.gtnewhorizons.angelica.glsm.backend.VSyncMode;
 import com.gtnewhorizons.angelica.glsm.backend.RenderBackend;
 import com.gtnewhorizons.angelica.glsm.hooks.GLSMConfig;
@@ -29,7 +31,6 @@ import com.gtnewhorizons.angelica.sdlgpu.frame.FenceTracker;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager.FrameState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.Presenter;
-import com.gtnewhorizons.retrofuturabootstrap.MainStartOnFirstThread;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.AttachmentClear;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DepthStencilReadback;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DrawDispatch;
@@ -121,7 +122,6 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Pointer;
 import org.lwjglx.opengl.Display;
 
-import me.eigenraven.lwjgl3ify.api.DisplayEvents;
 import com.gtnewhorizons.angelica.sdlgpu.compat.Lwjgl3GLCapabilitiesShim;
 import me.eigenraven.lwjgl3ify.api.GLCapabilitiesOverride;
 
@@ -140,6 +140,18 @@ public class SDLGPURenderBackend extends RenderBackend {
     private final Device device = SDLGPUGate.device();
     private final FrameManager frameManager = new FrameManager(device);
     private volatile Presenter presenter;
+    private boolean initializationStarted;
+    private Executor windowExecutor;
+    private MainThreadPump windowPump;
+
+    /** Configure before init when presentation must be marshalled to an application-owned window thread. */
+    public void configureWindowThread(Executor executor,
+            BooleanSupplier isWindowThread, Runnable pumpEvents, Runnable pollInput) {
+        if (initializationStarted) throw new IllegalStateException("Configure the window thread before renderer initialization");
+        windowExecutor = Objects.requireNonNull(executor);
+        windowPump = new MainThreadPump(executor, Objects.requireNonNull(isWindowThread),
+                Objects.requireNonNull(pumpEvents), Objects.requireNonNull(pollInput));
+    }
     private final ResourceManager resourceManager = new ResourceManager(device, frameManager);
     private final Image3DClear image3DClear = new Image3DClear();
     private final ShaderManager shaderManager = new ShaderManager(device);
@@ -278,6 +290,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     }
 
     @Override public void init() {
+        initializationStarted = true;
         final boolean lwjglDebugFlag = GLStateManager.getInitConfig() != null && GLStateManager.getInitConfig().isLwjglDebug();
         final boolean enableMarkers = lwjglDebugFlag || CaptureGate.enabledAtStartup();
         debugLabels = new DebugLabels(frameManager, enableMarkers);
@@ -337,7 +350,6 @@ public class SDLGPURenderBackend extends RenderBackend {
                 st.bumpAttribStateGen();
             }
         });
-        if (hasWindow()) DisplayEvents.addPreSwapchainInvalidatingChangeListener(SDLGPUGate.sdlGpuPreSwapchainInvalidatingCallback());
         GLSMConfig.expandVertexFormats = true;
         resourceManager.cachePreferredDepthFormats();
         cachedSwapchainFormatArray = new int[]{
@@ -353,8 +365,8 @@ public class SDLGPURenderBackend extends RenderBackend {
         shaderManager.setUniformReleaseListener(this::releaseUniformStagingAllThreads);
         fenceTracker.setUnresolvedFenceFlush(this::midFrameFenceFlush);
         frameManager.setMainThread(GLStateManager.getMainThread());
-        if (!SystemProperties.DISABLE_SDL_PRESENTER_THREAD) {
-            presenter = new Presenter(frameManager, MainStartOnFirstThread.instance(), Pump.INSTANCE);
+        if (windowPump != null && !SystemProperties.DISABLE_SDL_PRESENTER_THREAD) {
+            presenter = new Presenter(frameManager, windowExecutor, windowPump);
             frameManager.setPresenter(presenter);
             LOG.info("SDL presenter thread enabled: presents run on '{}'", device.getWindowThread() != null ? device.getWindowThread().getName() : "window thread");
         }
@@ -482,11 +494,10 @@ public class SDLGPURenderBackend extends RenderBackend {
         SDLTimer.SDL_DelayNS(nanos);
     }
 
-    private static final class Pump {
-        static final MainThreadPump INSTANCE = new MainThreadPump(MainStartOnFirstThread.instance(), MainThreadExec::isMainThread, Lwjgl3ifyEventLoop::pumpEvents, MainThreadPump::pollInput);
+    @Override public void pumpDisplayMessages() {
+        if (windowPump != null) windowPump.pumpMessages();
+        else super.pumpDisplayMessages();
     }
-
-    @Override public void pumpDisplayMessages() { Pump.INSTANCE.pumpMessages(); }
 
     @Override public void shutdown() {
         if (shutdown) return;
@@ -555,7 +566,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     }
 
     @Override public boolean isAvailable() {
-        return BackendOptions.sdlGpuRequested() && SDLGPUGate.isSDLGPUAvailable() && SDLGPUGate.isEngaged();
+        return BackendOptions.sdlGpuRequested() && SDLGPUGate.isEngaged();
     }
 
     @Override public String getName() {

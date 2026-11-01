@@ -365,7 +365,8 @@ public final class ComputeBinder implements ComputeDispatchSink {
             final long handle = rwBufferOverrides != null && slots[i] < rwBufferOverrides.length ? rwBufferOverrides[slots[i]] : resolveStorageBufHandle(st, slots[i]);
 
             if (handle == 0) { warnMissingBinding(st, 1, "RW storage buffer slot", slots[i], true); return null; }
-            buf.get(i).buffer(handle).cycle(cycle);
+            // GL storage writes preserve existing contents across dispatches, including atomic accumulators.
+            buf.get(i).buffer(handle).cycle(false);
         }
         buf.position(0);
         return buf;

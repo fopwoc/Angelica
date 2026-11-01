@@ -160,7 +160,8 @@ public final class QuadConverter {
             RENDER_BACKEND.bufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, newCap, GL15.GL_STREAM_DRAW);
             scratchEboCapacity = newCap;
         }
-        RENDER_BACKEND.bufferSubData(GL15.GL_ELEMENT_ARRAY_BUFFER, 0, dst);
+        // Earlier deferred draws must retain their indices until the GPU completes them.
+        RENDER_BACKEND.bufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, dst, GL15.GL_STREAM_DRAW);
 
         if (instanced) {
             RENDER_BACKEND.drawElementsInstanced(GL11.GL_TRIANGLES, triIndexCount, indexType, 0L, primcount);

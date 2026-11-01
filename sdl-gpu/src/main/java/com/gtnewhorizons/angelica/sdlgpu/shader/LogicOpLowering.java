@@ -4,7 +4,7 @@ import com.gtnewhorizons.angelica.glsm.GlslTransformUtils;
 import com.gtnewhorizons.angelica.glsm.shader.GlslVulkanPreprocess.Edit;
 import com.gtnewhorizons.angelica.glsm.shader.ShaderIndex;
 import org.antlr.v4.runtime.Token;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 import org.taumc.glsl.grammar.GLSLParser;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public final class LogicOpLowering {
     public static final String DST_SAMPLER_PREFIX = "angelica_LogicOpDst";
 
     private static final String MAIN_RENAME = "angelica_logicOpMain";
-    private static final String SNIPPET = ShaderLoader.getShaderSource("angelica:sdlgpu/logic_op.glsl");
+    private static final String SNIPPET = ShaderSources.getShaderSource("angelica:sdlgpu/logic_op.glsl");
 
     private record Output(String name, int location, int arrayLen, int vecSize) {}
 

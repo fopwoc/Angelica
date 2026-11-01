@@ -1,7 +1,7 @@
 package com.gtnewhorizons.angelica.glsm.ffp;
 
 import org.lwjgl.opengl.GL11;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 
 /**
  * Generates GLSL 330 core fragment shaders for FFP emulation.
@@ -24,13 +24,13 @@ public final class FragmentShaderGenerator {
             sb.append("#define GLINT_ALPHA_FUNC ").append(key.alphaTestEnabled() ? key.alphaTestFunc() : 7).append('\n');
             sb.append("#define GLINT_OVERLAY ").append(key.overlayInstanced() ? 2 : key.overlayEnabled() ? 1 : 0).append('\n');
             sb.append("#define GLINT_LIGHTMAP ").append(key.nrEnabledUnits() > 1 && key.unitEnabled(1) ? 1 : 0).append('\n');
-            sb.append(ShaderLoader.getShaderSource("angelica:combined_glint.frag.glsl"));
+            sb.append(ShaderSources.getShaderSource("angelica:combined_glint.frag.glsl"));
             return sb.toString();
         }
         sb.append("out vec4 fragColor;\n\n");
         if (key.textureSupersamplingSamples() > 1) {
             sb.append("#define TEXTURE_SUPERSAMPLING_SAMPLES ").append(key.textureSupersamplingSamples()).append('\n');
-            sb.append(ShaderLoader.getShaderSource("angelica:texture_supersampling.glsl"));
+            sb.append(ShaderSources.getShaderSource("angelica:texture_supersampling.glsl"));
         }
 
         sb.append("void main() {\n");

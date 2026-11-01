@@ -6,7 +6,7 @@ import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
 import com.gtnewhorizons.angelica.sdlgpu.util.MemoryAccess;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.sdl.SDLError;
 import org.lwjgl.sdl.SDL_GPUColorTargetDescription;
@@ -71,7 +71,7 @@ public final class FullscreenPass {
     }
 
     Fragment fragment(String path, int requiredUboSize) {
-        return fragment(path, requiredUboSize, () -> ShaderLoader.getShaderSource(path));
+        return fragment(path, requiredUboSize, () -> ShaderSources.getShaderSource(path));
     }
 
     Fragment fragment(String label, int requiredUboSize, Supplier<String> source) {
@@ -101,7 +101,7 @@ public final class FullscreenPass {
         if (vertexFailed) return 0;
         if (vertexShaderId == 0) {
             vertexShaderId = shaderManager.createShader(GL20.GL_VERTEX_SHADER);
-            shaderManager.shaderSource(vertexShaderId, ShaderLoader.getShaderSource(VERTEX_SOURCE));
+            shaderManager.shaderSource(vertexShaderId, ShaderSources.getShaderSource(VERTEX_SOURCE));
             shaderManager.compileShader(vertexShaderId);
         }
 

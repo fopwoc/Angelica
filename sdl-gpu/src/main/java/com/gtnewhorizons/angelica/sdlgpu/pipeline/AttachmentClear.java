@@ -6,7 +6,7 @@ import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager.FrameState;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FboState;
 import com.gtnewhorizons.angelica.sdlgpu.resource.PixelOps;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 import org.lwjgl.sdl.SDL_GPUColorTargetDescription;
 import org.lwjgl.sdl.SDL_GPUDepthStencilState;
 import org.lwjgl.system.MemoryStack;
@@ -70,7 +70,7 @@ public final class AttachmentClear {
         for (int i = 0; i <= MAX_COLOR_TARGETS; i++) {
             final int count = i;
             fragments[i] = fullscreen.fragment(FRAGMENT_SOURCE + " COLOR_TARGETS=" + count, count > 0 ? 16 : -1, () -> {
-                final String source = ShaderLoader.getShaderSource(FRAGMENT_SOURCE);
+                final String source = ShaderSources.getShaderSource(FRAGMENT_SOURCE);
                 return count == 0 ? source : withColorOutputs(source, count);
             });
         }

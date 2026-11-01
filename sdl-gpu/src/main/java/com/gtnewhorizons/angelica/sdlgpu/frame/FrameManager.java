@@ -522,7 +522,7 @@ public final class FrameManager {
         acquireThreadReported = true;
 
         final String message = "Swapchain acquired on '" + self.getName() + "', window created on '" + window.getName() + "'";
-        if (SystemProperties.isDeobf() && !SystemProperties.DISABLE_SDL_PRESENTER_THREAD) throw new IllegalStateException(message);
+        if (SystemProperties.debugTooling() && !SystemProperties.DISABLE_SDL_PRESENTER_THREAD) throw new IllegalStateException(message);
         LOG.warn(message);
     }
 

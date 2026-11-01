@@ -1,6 +1,5 @@
 package com.gtnewhorizons.angelica.config;
 
-import net.minecraft.launchwrapper.Launch;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -101,11 +100,11 @@ public final class SystemProperties {
     public static final String KEY_CELERITAS_LWJGL_SERVICE = "celeritas.lwjglService";
 
     public static boolean dumpShaders() {
-        return DUMP_SHADERS_PROP || isDeobf();
+        return DUMP_SHADERS_PROP;
     }
 
     public static boolean debugTooling() {
-        return DEBUG_TOOLING_PROP || isDeobf();
+        return DEBUG_TOOLING_PROP;
     }
 
     public static Path shaderDumpDir(String phase) {
@@ -201,10 +200,6 @@ public final class SystemProperties {
         } catch (NumberFormatException e) {
             return Float.NaN;
         }
-    }
-
-    public static boolean isDeobf() {
-        return Launch.blackboard != null && Boolean.TRUE.equals(Launch.blackboard.get("fml.deobfuscatedEnvironment"));
     }
 
     private SystemProperties() {}

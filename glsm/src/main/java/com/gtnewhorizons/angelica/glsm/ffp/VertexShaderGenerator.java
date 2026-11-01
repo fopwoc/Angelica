@@ -1,7 +1,7 @@
 package com.gtnewhorizons.angelica.glsm.ffp;
 
 import com.gtnewhorizon.gtnhlib.client.renderer.vertex.VertexFormatElement;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 
 /**
  * Generates GLSL 330 core vertex shaders for FFP emulation.
@@ -21,7 +21,7 @@ public final class VertexShaderGenerator {
         emitUniforms(sb, key);
         emitOutputs(sb, key);
         if (key.lineQuads()) {
-            sb.append(ShaderLoader.getShaderSource("angelica:include/line_quads.glsl")).append('\n');
+            sb.append(ShaderSources.getShaderSource("angelica:include/line_quads.glsl")).append('\n');
         }
 
         sb.append("void main() {\n");

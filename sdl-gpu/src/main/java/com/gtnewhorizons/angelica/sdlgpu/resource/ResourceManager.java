@@ -132,7 +132,8 @@ public final class ResourceManager {
     public void markFboAttachment(int glId) { fboAttachedGlIds.add(glId); }
     public boolean isFboAttachment(int glId) { return fboAttachedGlIds.contains(glId); }
 
-    public boolean shouldDeferTextureUpload(ContextState st, int glId) { return st.deferUploads && !isFboAttachment(glId); }
+    // Bound uploads and inline writes must share the same ordered command stream.
+    public boolean shouldDeferTextureUpload(ContextState st, int glId) { return false; }
 
     private int preferredD24 = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
     private int preferredD24S8 = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;

@@ -6,7 +6,7 @@ import com.gtnewhorizons.angelica.sdlgpu.shader.cross.CrossCompileCache;
 import com.gtnewhorizons.angelica.sdlgpu.shader.msl.MslCrossCompile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.embeddedt.embeddium.impl.render.shader.ShaderLoader;
+import com.gtnewhorizons.angelica.glsm.shader.ShaderSources;
 import org.lwjgl.opengl.GL43;
 import org.lwjgl.sdl.SDLError;
 import org.lwjgl.sdl.SDL_GPUComputePipelineCreateInfo;
@@ -35,7 +35,7 @@ public final class ImageAtomicsProbe {
 
     public ImageAtomicsProbe(long device) {
         this.device = device;
-        final SpirvCompiler.Result compiled = SpirvCompiler.compile(ShaderLoader.getShaderSource(SOURCE), Shaderc.shaderc_compute_shader, "atomic_probe", SpirvCompiler.Options.vulkanForced460Core(), false);
+        final SpirvCompiler.Result compiled = SpirvCompiler.compile(ShaderSources.getShaderSource(SOURCE), Shaderc.shaderc_compute_shader, "atomic_probe", SpirvCompiler.Options.vulkanForced460Core(), false);
         if (compiled.spirv() == null) {
             LOG.warn("Metal image atomics: probe pipeline failed: {}", compiled.error());
             return;

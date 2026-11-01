@@ -94,7 +94,7 @@ public final class MainThreadPump {
             }
             if (waiting(presentPump) && !stallReported && System.nanoTime() - stallAt >= 0L) {
                 stallReported = true;
-                LOGGER.warn("Display message pump has been waiting on the RFB main thread for over {} ms", STALL_WARN_NANOS / 1_000_000L);
+                LOGGER.warn("Display message pump has been waiting on the application window thread for over {} ms", STALL_WARN_NANOS / 1_000_000L);
             }
         }
         if (interrupted) Thread.currentThread().interrupt();
