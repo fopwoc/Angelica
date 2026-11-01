@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.glsm.backend;
 
 import com.gtnewhorizon.gtnhlib.bytebuf.MemoryUtilities;
+import com.gtnewhorizons.angelica.glsm.CompatShaderTransformer;
 import com.gtnewhorizons.angelica.glsm.GLESFormatRemap;
 import com.gtnewhorizons.angelica.glsm.GLSMAttribStack;
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
@@ -518,6 +519,10 @@ public abstract class RenderBackend {
         if (count != null) count.put(0, 0);
     }
     public String getShaderSource(int shader, int maxLength) { return ""; }
+    /** Compatibility rewrite of application GLSL; backends that preprocess it first override this. */
+    public String compatShaderSource(String source, int type, boolean fragment, int shader) {
+        return CompatShaderTransformer.transform(source, type, fragment);
+    }
     public abstract void getShaderSource(int shader, IntBuffer length, ByteBuffer source);
 
     public abstract void uniform1i(int location, int v0);

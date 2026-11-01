@@ -9,6 +9,7 @@ import static org.lwjgl.opengl.GL20.GL_LINK_STATUS;
 import static org.lwjgl.opengl.GL30.*;
 
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
+import com.gtnewhorizons.angelica.sdlgpu.compat.CompatShaderInput;
 import com.gtnewhorizons.angelica.sdlgpu.shader.MatrixUniformUploads;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ProgramLinkState;
 import com.gtnewhorizons.angelica.sdlgpu.shader.SamplerUniforms;
@@ -86,6 +87,11 @@ public abstract class ShaderLayer extends TextureLayer {
         int id = super.createProgram();
         subsystems().shaderPrograms().programCreated(id);
         return id;
+    }
+
+    @Override
+    public String compatShaderSource(String source, int type, boolean fragment, int shader) {
+        return CompatShaderInput.transform(source, type, fragment, shader);
     }
 
     @Override

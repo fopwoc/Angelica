@@ -117,7 +117,7 @@ public final class GLSMPrograms {
         src = GlslTransformUtils.renameReservedWords(src, RENDER_BACKEND.getMinGLSLVersion());
         if (ShaderManager.isEnabled()) {
             final int shaderType = RENDER_BACKEND.getShaderi(shader, GL20.GL_SHADER_TYPE);
-            src = CompatShaderTransformer.transform(src, shaderType, shaderType == GL20.GL_FRAGMENT_SHADER);
+            src = RENDER_BACKEND.compatShaderSource(src, shaderType, shaderType == GL20.GL_FRAGMENT_SHADER, shader);
         }
         RENDER_BACKEND.shaderSource(shader, src);
     }

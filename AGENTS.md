@@ -55,6 +55,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
   map writers, so per-draw caches of derived texture state know to refresh.
 - `PipelineApplier.ensureDrawRenderPass`: `DrawTrace.beforeDraw` at the common draw boundary, including indirect and
   instanced draws.
+- `RenderBackend.compatShaderSource` (new, defaults to `CompatShaderTransformer.transform`): `GLSMPrograms.glShaderSource`
+  calls it; `ShaderLayer` overrides it to resolve conditional GLSL first (`CompatShaderInput`).
 
 ## Deleted on `pz`
 
