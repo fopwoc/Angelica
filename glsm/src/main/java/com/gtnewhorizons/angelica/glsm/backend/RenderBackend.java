@@ -530,6 +530,10 @@ public abstract class RenderBackend {
     /** Whether {@link #getInteger(int)} answers this texture binding query from the backend's own bindings. */
     public boolean answersTextureBindingQuery(int parameter) { return false; }
     public void onTextureDeleted(int texture) {}
+    /** Whether GLSM may skip a global color mask equal to its cache; false while outputs differ per index. */
+    public boolean cachesColorMask() { return true; }
+    /** Whether GLSM may skip a global blend equation equal to its cache; false while outputs differ per index. */
+    public boolean cachesBlendEquation() { return true; }
 
     public abstract void uniform1i(int location, int v0);
     public abstract void uniform1f(int location, float v0);

@@ -17,6 +17,16 @@ import org.lwjgl.system.MemoryUtil;
 /** Framebuffer attachments with layer slices, draw/read buffer selection, clears, and readback guards. */
 public abstract class FramebufferLayer extends BufferLayer {
     @Override
+    public boolean cachesColorMask() {
+        return !subsystems().colorMasks().indexed();
+    }
+
+    @Override
+    public boolean cachesBlendEquation() {
+        return !subsystems().blendEquations().indexed();
+    }
+
+    @Override
     public int getIntegerIndexed(int parameter, int index) {
         return switch (parameter) {
             case GL_BLEND, GL_SCISSOR_TEST -> BlendBridge.glIsEnabledi(parameter, index) ? GL_TRUE : GL_FALSE;

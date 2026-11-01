@@ -172,7 +172,7 @@ public final class GLSMBlend {
         if (DisplayListManager.isRecording()) {
             throw DisplayListManager.unsupportedInList("glBlendEquation");
         }
-        final boolean caching = isCachingEnabled();
+        final boolean caching = isCachingEnabled() && RENDER_BACKEND.cachesBlendEquation();
         final boolean bypass = !caching;
         if (bypass || glCtx.blendState.getEquationRgb() != mode || glCtx.blendState.getEquationAlpha() != mode) {
             mod(glCtx.blendState);
@@ -189,7 +189,7 @@ public final class GLSMBlend {
         if (DisplayListManager.isRecording()) {
             throw DisplayListManager.unsupportedInList("glBlendEquationSeparate");
         }
-        final boolean caching = isCachingEnabled();
+        final boolean caching = isCachingEnabled() && RENDER_BACKEND.cachesBlendEquation();
         final boolean bypass = !caching;
         if (bypass || glCtx.blendState.getEquationRgb() != modeRGB || glCtx.blendState.getEquationAlpha() != modeAlpha) {
             mod(glCtx.blendState);
@@ -257,7 +257,7 @@ public final class GLSMBlend {
             dch.deferColorMask(red, green, blue, alpha);
             return;
         }
-        final boolean caching = isCachingEnabled();
+        final boolean caching = isCachingEnabled() && RENDER_BACKEND.cachesColorMask();
         final boolean bypass = !caching;
         if (bypass || red != glCtx.colorMask.red || green != glCtx.colorMask.green || blue != glCtx.colorMask.blue || alpha != glCtx.colorMask.alpha) {
             mod(glCtx.colorMask);

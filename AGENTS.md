@@ -60,6 +60,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `RenderBackend.selectTextureTarget`/`answersTextureBindingQuery`/`onTextureDeleted` (new, no-op defaults): called at
   the head of GLSM's 30 target-taking texture operations, `GLSMQueries.glGetInteger`, and
   `GLSMTextures.onDeleteTexture`; `TextureLayer` keeps per-target logical bindings through them.
+- `RenderBackend.cachesColorMask`/`cachesBlendEquation` (new, default `true`): `GLSMBlend.glColorMask`,
+  `glBlendEquation`, and `glBlendEquationSeparate` bypass their cache when false; `FramebufferLayer` returns false
+  while outputs differ per index.
+- `PipelineCache`: `computeOutputHash` mixes in `ColorMaskHooks`/`BlendEquationHooks`, and `createPipelineInner` reads
+  each color target's write mask and blend ops through them.
 
 ## Deleted on `pz`
 

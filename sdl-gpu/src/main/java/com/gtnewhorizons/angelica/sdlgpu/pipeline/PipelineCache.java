@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.BlendEquationHooks;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.ColorMaskHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -395,7 +397,7 @@ public final class PipelineCache {
         for (int i = 0; i < ctfLen; i++) {
             h = Hashing.fmix64(h, colorTargetFormats()[i]);
         }
-        return h;
+        return BlendEquationHooks.hash(ColorMaskHooks.hash(h));
     }
 
     private long computeShaderHash() {
@@ -498,11 +500,11 @@ public final class PipelineCache {
                     .enable_blend(blendEnabledForSlot(i))
                     .src_color_blendfactor(srcColorFactors[i])
                     .dst_color_blendfactor(dstColorFactors[i])
-                    .color_blend_op(colorBlendOp)
+                    .color_blend_op(BlendEquationHooks.color(colorBlendOp, i))
                     .src_alpha_blendfactor(srcAlphaFactors[i])
                     .dst_alpha_blendfactor(dstAlphaFactors[i])
-                    .alpha_blend_op(alphaBlendOp)
-                    .color_write_mask((byte) colorWriteMask)
+                    .alpha_blend_op(BlendEquationHooks.alpha(alphaBlendOp, i))
+                    .color_write_mask((byte) ColorMaskHooks.mask(i))
                     .enable_color_write_mask(true);
             }
 
