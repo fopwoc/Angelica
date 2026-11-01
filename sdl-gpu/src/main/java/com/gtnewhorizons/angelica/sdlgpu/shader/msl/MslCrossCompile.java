@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.shader.msl;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import com.gtnewhorizons.angelica.sdlgpu.shader.cross.CrossCompileCache;
 import com.gtnewhorizons.angelica.sdlgpu.shader.cross.CrossCompileCache.Output;
@@ -29,8 +30,8 @@ public final class MslCrossCompile {
     private static final int SPVC_MSL_2_2 = mslVersion(2, 2, 0);
     public static final int SPVC_MSL_3_1 = mslVersion(3, 1, 0);
 
-    private static final CrossCompileCache CACHE = new CrossCompileCache("msl", CrossCompileUtil::spvcId, (spirv, glShaderType) -> compileAtVersion(spirv, glShaderType, SPVC_MSL_2_2));
-    private static final CrossCompileCache CACHE_3_1 = new CrossCompileCache("msl31", CrossCompileUtil::spvcId, (spirv, glShaderType) -> compileAtVersion(spirv, glShaderType, SPVC_MSL_3_1));
+    private static final CrossCompileCache CACHE = new CrossCompileCache("julia-buffer-msl-v1", CrossCompileUtil::spvcId, (spirv, glShaderType) -> compileAtVersion(spirv, glShaderType, SPVC_MSL_2_2));
+    private static final CrossCompileCache CACHE_3_1 = new CrossCompileCache("julia-buffer-msl31-v1", CrossCompileUtil::spvcId, (spirv, glShaderType) -> compileAtVersion(spirv, glShaderType, SPVC_MSL_3_1));
 
     @FunctionalInterface
     private interface BufferSlotFn { public int slot(int set, int binding); }
@@ -84,7 +85,7 @@ public final class MslCrossCompile {
                 final long opts = pOpts.get(0);
                 Spvc.spvc_compiler_options_set_uint(opts, Spvc.SPVC_COMPILER_OPTION_MSL_VERSION, version);
                 Spvc.spvc_compiler_options_set_uint(opts, Spvc.SPVC_COMPILER_OPTION_MSL_PLATFORM, Spvc.SPVC_MSL_PLATFORM_MACOS);
-                if (Spvc.spvc_compiler_install_compiler_options(compiler, opts) != Spvc.SPVC_SUCCESS) {
+                if (BufferTextureHooks.installMslOptions(compiler, opts) != Spvc.SPVC_SUCCESS) {
                     throw CrossCompileUtil.spvcError(ctx, BACKEND, "install_compiler_options");
                 }
 

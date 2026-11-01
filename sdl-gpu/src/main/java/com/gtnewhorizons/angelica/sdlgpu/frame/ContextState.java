@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.frame;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.glsm.GLContextState;
 import com.gtnewhorizons.angelica.sdlgpu.SDLGPURenderBackend;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.PipelineCache;
@@ -285,6 +286,7 @@ public final class ContextState {
     public int boundPixelPackBuffer;
 
     public int getBoundBuffer(int target) {
+        if (target == GL31.GL_TEXTURE_BUFFER) return BufferTextureHooks.boundBuffer();
         return switch (target) {
             case GL15.GL_ARRAY_BUFFER -> boundArrayBuffer;
             case GL15.GL_ELEMENT_ARRAY_BUFFER -> currentVao.elementBuffer;

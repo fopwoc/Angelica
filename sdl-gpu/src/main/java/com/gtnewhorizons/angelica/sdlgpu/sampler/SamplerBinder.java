@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.sampler;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.device.Device;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -150,7 +151,7 @@ public final class SamplerBinder {
                 continue;
             }
             final int glUnit = samplerUnits[i];
-            final int glTexId = st.boundTexture(glUnit);
+            final int glTexId = BufferTextureHooks.samplerBinding(st, glUnit, i, fragment);
             long texHandle = (glTexId != 0) ? TextureViewHooks.samplingHandle(resourceManager, glTexId) : 0;
             if (texHandle == 0) {
                 texHandle = fallbackTexture;

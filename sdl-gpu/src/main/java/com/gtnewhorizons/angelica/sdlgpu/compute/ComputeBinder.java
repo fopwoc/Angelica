@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.compute;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.glsm.profiling.Tracy;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -377,8 +378,8 @@ public final class ComputeBinder implements ComputeDispatchSink {
         final SDL_GPUTextureSamplerBinding.Buffer buf = SDL_GPUTextureSamplerBinding.calloc(units.length, stack);
         for (int i = 0; i < units.length; i++) {
             final int unit = resolveUnit(prog.samplerTextureUnits, names, i, units[i]);
-            final int texGlId = st.boundTextures[unit];
-            long texHandle = texGlId != 0 ? resourceManager.getTextureHandle(texGlId) : 0;
+            final int texGlId = BufferTextureHooks.computeSamplerBinding(st, unit, i, names);
+            long texHandle = texGlId != 0 ? BufferTextureHooks.samplingHandle(resourceManager, texGlId) : 0;
             if (texHandle == 0) {
                 texHandle = resourceManager.getOrCreateFallbackTexture();
                 if (texHandle == 0) { warnMissingBinding(st, 2, "sampler texture unit", unit, true); return false; }

@@ -79,6 +79,10 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `PipelineApplier.ensureDrawRenderPass` prepares views and buffer textures; `SamplerBinder` samples through views,
   buffer textures and fallbacks. `RenderBackend.deleteTextureNow` (new, default `false`) lets `TextureLayer` delete
   at once instead of `GLSMTextureLifetime.deferDeleteTexture`'s deferral.
+- Buffer textures through `BufferTextureHooks` (owned): `ContextState.getBoundBuffer(GL_TEXTURE_BUFFER)`,
+  `ResourceManager.returnBufferToPool` retiring storage that buffer textures still hold, typed sampler lookups in
+  `SamplerBinder.bindStageSamplers` and `ComputeBinder.bindComputeSamplers`, and native MSL texture buffers in
+  `MslCrossCompile` (whose cache keys are renamed so older translations are not reused).
 
 ## Deleted on `pz`
 

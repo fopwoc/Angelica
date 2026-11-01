@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureStorage;
 import java.util.function.LongConsumer;
@@ -728,6 +729,7 @@ public final class ResourceManager {
     }
 
     private void returnBufferToPool(long handle, int usage, long size) {
+        if (BufferTextureHooks.retire(this, handle)) return;
         final int bucket = findGpuBucketIndex(size);
         if (bucket < 0) {
             deferredBufferReleases.add(handle);
