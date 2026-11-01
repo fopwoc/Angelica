@@ -46,10 +46,16 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
   capability shim on the initializing thread.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.
+- Widened for `Upstream` (owned, `sdlgpu`): `SDLGPURenderBackend`'s manager fields, `s()`, `flushAndSubmitMidFrame`,
+  and `midFrameFenceFlush` (package-private); `FenceTracker.fenceMap`, `ShaderManager.releaseShaderAttachment`, and
+  `ResourceManager.textureHandles`/`textureMetas`/`wLock`/`beforeTextureReplaced` (public).
+- `sdl-gpu`'s `RenderBackend` service file registers only `HostedBackend`, the owned subclass chain
+  (`sdlgpu.layer`) over `SDLGPURenderBackend`.
 
 ## Deleted on `pz`
 
 - LWJGL2 `Display`/`Drawable` context model: `GLStateManager.makeCurrent`/`releaseContext`/`swapBuffers`/
   `updateDisplay`, the matching `RenderBackend` hooks and redirector rewrites, `SDLDrawable`, `SDLGPUDisplayBridge`.
-- GLU quadrics (`compat/lwjgl/Angelica*`), `Lwjgl2GLRenderBackend`, `MainThreadPump.pollInput`, the `launchwrapper`
-  stub, and the `KHRDebugCallback` overload of `glDebugMessageCallback`.
+- GLU quadrics (`compat/lwjgl/Angelica*`), `Lwjgl2GLRenderBackend` and glsm's service file that registered it,
+  `MainThreadPump.pollInput`, the `launchwrapper` stub, and the `KHRDebugCallback` overload of
+  `glDebugMessageCallback`.

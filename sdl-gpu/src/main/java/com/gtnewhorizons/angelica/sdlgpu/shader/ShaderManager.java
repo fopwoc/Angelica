@@ -462,7 +462,7 @@ public final class ShaderManager {
         if (obj.spirv != null) memFree(obj.spirv);
     }
 
-    private void releaseShaderAttachment(int shader) {
+    public void releaseShaderAttachment(int shader) {
         if (shader == 0) return;
         final ShaderObject obj = shaderObjects.get(shader);
         if (obj == null) return;

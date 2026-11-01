@@ -135,7 +135,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     private static final Tracy.ZoneId Z_SDL_INDIRECT_DRAW = Tracy.zoneId("sdlIndirectDraw", Tracy.COLOR_TERRAIN);
 
     private final Device device = SDLGPUGate.device();
-    private final FrameManager frameManager = new FrameManager(device);
+    final FrameManager frameManager = new FrameManager(device);
     private volatile Presenter presenter;
     private boolean initializationStarted;
     private Executor windowExecutor;
@@ -149,9 +149,9 @@ public class SDLGPURenderBackend extends RenderBackend {
         windowPump = new MainThreadPump(executor, Objects.requireNonNull(isWindowThread),
                 Objects.requireNonNull(pumpEvents), Objects.requireNonNull(pollInput));
     }
-    private final ResourceManager resourceManager = new ResourceManager(device, frameManager);
+    final ResourceManager resourceManager = new ResourceManager(device, frameManager);
     private final Image3DClear image3DClear = new Image3DClear();
-    private final ShaderManager shaderManager = new ShaderManager(device);
+    final ShaderManager shaderManager = new ShaderManager(device);
     private final PipelineStore pipelineStore = new PipelineStore(device);
     private final FullscreenPass fullscreenPass = new FullscreenPass(shaderManager, device);
 
@@ -164,9 +164,9 @@ public class SDLGPURenderBackend extends RenderBackend {
     private DebugLabels debugLabels;
 
 
-    private final FenceTracker fenceTracker = new FenceTracker(device, frameManager);
+    final FenceTracker fenceTracker = new FenceTracker(device, frameManager);
     private final LongArrayFIFOQueue frameSyncs = new LongArrayFIFOQueue();
-    private final FBOClearTracker fboClearTracker = new FBOClearTracker(frameManager, resourceManager, shaderManager);
+    final FBOClearTracker fboClearTracker = new FBOClearTracker(frameManager, resourceManager, shaderManager);
     private final SamplerBinder samplerBinder = new SamplerBinder(device, resourceManager, shaderManager);
     private final MovedSamplerConversion movedSamplerConversion = new MovedSamplerConversion(frameManager, pipelineStore, fullscreenPass);
     private final MovedSamplerCopies movedSamplerCopies = new MovedSamplerCopies(device, frameManager, resourceManager, movedSamplerConversion);
@@ -183,11 +183,11 @@ public class SDLGPURenderBackend extends RenderBackend {
             @Override public void enqueue(TransferThread.DeferredUpload upload) { enqueueUpload(upload); }
             @Override public long nextSeq() { return TransferThread.nextSeq(); }
         });
-    private final PipelineApplier pipelineApplier = new PipelineApplier(frameManager, resourceManager, shaderManager, pipelineStore, fboClearTracker, persistentSync, samplerBinder, storageTextureBinder, storageBufferBinder, movedSamplerCopies);
+    final PipelineApplier pipelineApplier = new PipelineApplier(frameManager, resourceManager, shaderManager, pipelineStore, fboClearTracker, persistentSync, samplerBinder, storageTextureBinder, storageBufferBinder, movedSamplerCopies);
     private final VertexWriteReplayer vertexWriteReplayer = new VertexWriteReplayer(shaderManager, resourceManager, pipelineApplier, computeBinder, SDLGPURenderBackend::s);
-    private final AttachmentClear attachmentClear = new AttachmentClear(frameManager, pipelineStore, fullscreenPass);
+    final AttachmentClear attachmentClear = new AttachmentClear(frameManager, pipelineStore, fullscreenPass);
     private final DepthStencilReadback depthStencilReadback = new DepthStencilReadback(frameManager, resourceManager, pipelineStore, fullscreenPass, fboClearTracker);
-    private final DrawDispatch drawDispatch = new DrawDispatch(device, frameManager, resourceManager, pipelineApplier, this::enqueuePreCopied);
+    final DrawDispatch drawDispatch = new DrawDispatch(device, frameManager, resourceManager, pipelineApplier, this::enqueuePreCopied);
     private final FFPTrace ffpTrace = SystemProperties.FFP_TRACE ? new FFPTrace(resourceManager) : null;
 
     private final IntOpenHashSet missingProgramWarned = new IntOpenHashSet();
@@ -210,7 +210,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     private static final ThreadRegistry<ContextState> registeredStates = new ThreadRegistry<>(new ContextState[0]);
     private static final ThreadLocal<ContextState> tlState = new ThreadLocal<>();
 
-    private static ContextState s() {
+    static ContextState s() {
         final ContextState sole = registeredStates.sole();
         if (sole != null && sole.owner == Thread.currentThread()) return sole;
         final ContextState st = tlState.get();
@@ -668,7 +668,7 @@ public class SDLGPURenderBackend extends RenderBackend {
         }
     }
 
-    private void flushAndSubmitMidFrame() {
+    void flushAndSubmitMidFrame() {
         final ContextState st = s();
         drainDeferredPersistentRegions(st);
         pipelineApplier.flushAttribRingChunk(st);
@@ -679,7 +679,7 @@ public class SDLGPURenderBackend extends RenderBackend {
         frameManager.submitMidFrame();
     }
 
-    private void midFrameFenceFlush() {
+    void midFrameFenceFlush() {
         flushAndSubmitMidFrame();
         fenceTracker.resolvePendingFences();
     }

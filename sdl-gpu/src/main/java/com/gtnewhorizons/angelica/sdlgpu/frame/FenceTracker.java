@@ -20,7 +20,7 @@ public final class FenceTracker {
     private final FrameManager frameManager;
 
     private long nextFenceId = 1;
-    private final Long2LongOpenHashMap fenceMap = new Long2LongOpenHashMap();
+    public final Long2LongOpenHashMap fenceMap = new Long2LongOpenHashMap();
     private final LongArrayList pendingFenceSyncs = new LongArrayList();
     private final Long2IntOpenHashMap fenceRefcounts = new Long2IntOpenHashMap();
 

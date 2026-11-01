@@ -77,8 +77,8 @@ public final class ResourceManager {
     private final Device device;
     private final FrameManager frameManager;
 
-    private final Int2LongOpenHashMap textureHandles = new Int2LongOpenHashMap();
-    private final Int2ObjectOpenHashMap<TextureMeta> textureMetas = new Int2ObjectOpenHashMap<>();
+    public final Int2LongOpenHashMap textureHandles = new Int2LongOpenHashMap();
+    public final Int2ObjectOpenHashMap<TextureMeta> textureMetas = new Int2ObjectOpenHashMap<>();
     private final IntOpenHashSet fboAttachedGlIds = new IntOpenHashSet();
     private final Int2LongOpenHashMap bufferHandles = new Int2LongOpenHashMap();
     private final Int2LongOpenHashMap bufferSizes = new Int2LongOpenHashMap();
@@ -122,7 +122,7 @@ public final class ResourceManager {
 
     private final ReentrantReadWriteLock handleLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock rLock = handleLock.readLock();
-    private final ReentrantReadWriteLock.WriteLock wLock = handleLock.writeLock();
+    public final ReentrantReadWriteLock.WriteLock wLock = handleLock.writeLock();
 
     public SamplerCache samplerCache() { return samplerCache; }
 
@@ -318,7 +318,7 @@ public final class ResourceManager {
         textureReplaceHook = hook;
     }
 
-    private void beforeTextureReplaced() {
+    public void beforeTextureReplaced() {
         final Runnable hook = textureReplaceHook;
         if (hook != null) hook.run();
     }
