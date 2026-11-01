@@ -73,6 +73,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
   synchronization; Minecraft's separate splash renderer is removed. `OffscreenTarget` remains the final frame target.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
   capability shim in `onPostWindowCreate` (including offscreen windows), before GLSM pre-initialization reads it.
+- `Feature`: JDK-backed `utils.OrderedSets` preserves insertion order, duplicate elimination, and null rejection
+  without Guava; `GLSMRedirector` uses JDK sets for unordered string membership.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.
 - `TessellatorEntityIds`, `TessellatorStreamingDrawer`: import GTNHLib's owned `Tessellator` instead of Minecraft's;
   its global `instance` is always `null`.
@@ -137,3 +139,4 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `FrameManager.presentSplash`, and their splash-only tests. Normal offscreen presentation remains.
 - LWJGL2-only `GLU`, `Project`, and `Util.checkGLError` redirector entries; LWJGL3 does not expose those classes.
 - Metal HUD integration: native implementation, build include, and its direct-symbol bypass were removed.
+- `BackendStartGuard` and its test: only the unbuilt Minecraft launcher/UI used automatic backend fallback.

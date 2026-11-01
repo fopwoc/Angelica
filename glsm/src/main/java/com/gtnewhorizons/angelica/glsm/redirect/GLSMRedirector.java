@@ -1,6 +1,5 @@
 package com.gtnewhorizons.angelica.glsm.redirect;
 
-import com.google.common.collect.ImmutableSet;
 import com.gtnewhorizon.gtnhlib.asm.ClassConstantPoolParser;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import org.apache.logging.log4j.LogManager;
@@ -43,12 +42,12 @@ public class GLSMRedirector {
 
     private static final String LWJGL_GL_PACKAGE = "org/lwjgl/opengl/";
 
-    private static final Set<String> DEBUG_OWNERS = ImmutableSet.of(
+    private static final Set<String> DEBUG_OWNERS = Set.of(
         "org/lwjgl/opengl/ARBDebugOutput",
         "org/lwjgl/opengl/AMDDebugOutput"
     );
 
-    private static final Set<String> DEBUG_METHODS = ImmutableSet.of(
+    private static final Set<String> DEBUG_METHODS = Set.of(
         "glDebugMessageCallback",
         "glDebugMessageControl",
         "glDebugMessageInsert",
@@ -86,7 +85,7 @@ public class GLSMRedirector {
         return desc.contains("Lorg/lwjgl/");
     }
 
-    private static final Set<String> AWARE_NON_DISPATCHING = ImmutableSet.of(
+    private static final Set<String> AWARE_NON_DISPATCHING = Set.of(
         "org/lwjgl/opengl/GL getCapabilities",
         "org/lwjgl/opengl/GL setCapabilities",
         "org/lwjgl/opengl/GL getFunctionProvider",

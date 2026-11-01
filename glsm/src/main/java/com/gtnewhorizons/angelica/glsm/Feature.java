@@ -1,6 +1,6 @@
 package com.gtnewhorizons.angelica.glsm;
 
-import com.google.common.collect.ImmutableSet;
+import com.gtnewhorizons.angelica.glsm.utils.OrderedSets;
 import com.gtnewhorizon.gtnhlib.client.renderer.stacks.IStateStack;
 import com.gtnewhorizons.angelica.glsm.ffp.ShaderManager;
 import com.gtnewhorizons.angelica.glsm.stacks.CowStateStack;
@@ -78,7 +78,7 @@ public class Feature {
     static {
         final Int2ObjectMap<Set<IStateStack<?>>> attribToFeatures = new Int2ObjectOpenHashMap<>();
 
-        attribToFeatures.put(GL11.GL_COLOR_BUFFER_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_COLOR_BUFFER_BIT, OrderedSets.of(
               GLSMDepthStencilAlpha.getAlphaTest()
             , GLSMDepthStencilAlpha.getAlphaState()
             , GLSMBlend.getBlendMode()
@@ -91,7 +91,7 @@ public class Feature {
             , GLSMBlend.getColorMask()
             , GLSMBlend.getClearColor()
         ));
-        attribToFeatures.put(GL11.GL_CURRENT_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_CURRENT_BIT, OrderedSets.of(
               GLSMCurrentAttribs.getColor()
             , GLSMCurrentAttribs.getSecondaryColor() // Current secondary color
             , ShaderManager.getNormalStack()    // Current normal vector
@@ -105,14 +105,14 @@ public class Feature {
             // Texture coordinates associated with current raster position
             // GL_EDGE_FLAG flag
         ));
-        attribToFeatures.put(GL11.GL_DEPTH_BUFFER_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_DEPTH_BUFFER_BIT, OrderedSets.of(
               GLSMDepthStencilAlpha.getDepthTest()
             , GLSMDepthStencilAlpha.getDepthState()
             // Depth buffer clear value
             // GL_DEPTH_WRITEMASK enable bit
         ));
 
-        final HashSet<IStateStack<?>> enableBits = new HashSet<>(ImmutableSet.of(
+        final HashSet<IStateStack<?>> enableBits = new HashSet<>(OrderedSets.of(
               GLSMDepthStencilAlpha.getAlphaTest()
             , GLSMRasterizer.getAutoNormalState()
             , GLSMBlend.getBlendMode()
@@ -188,7 +188,7 @@ public class Feature {
         addTextureGenStates(enableBits);
 
         attribToFeatures.put(GL11.GL_ENABLE_BIT, enableBits);
-        attribToFeatures.put(GL11.GL_EVAL_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_EVAL_BIT, OrderedSets.of(
               GLSMRasterizer.getAutoNormalState()
             , GLSMRasterizer.getMap1Color4State()
             , GLSMRasterizer.getMap1IndexState()
@@ -209,7 +209,7 @@ public class Feature {
             , GLSMRasterizer.getMap2Vertex3State()
             , GLSMRasterizer.getMap2Vertex4State()
         ));
-        attribToFeatures.put(GL11.GL_FOG_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_FOG_BIT, OrderedSets.of(
               GLSMFog.getFogMode()
             , GLSMCurrentAttribs.getColorSumState()
             , GLSMFog.getFogState()
@@ -219,10 +219,10 @@ public class Feature {
             // Fog index
                                        // ^^ GL_FOG_MODE value
         ));
-        attribToFeatures.put(GL11.GL_HINT_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_HINT_BIT, OrderedSets.of(
             GLSMRasterizer.getHintState()
         ));
-        attribToFeatures.put(GL11.GL_LIGHTING_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_LIGHTING_BIT, OrderedSets.of(
             GLSMLighting.getColorMaterial()
             , GLSMLighting.getColorMaterialFace()
             , GLSMLighting.getColorMaterialParameter()
@@ -255,15 +255,15 @@ public class Feature {
             , GLSMLighting.getBackMaterial()
             , GLSMRasterizer.getShadeModelState()
         ));
-        attribToFeatures.put(GL11.GL_LINE_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_LINE_BIT, OrderedSets.of(
               GLSMRasterizer.getLineSmoothState()
             , GLSMRasterizer.getLineStippleState()
             , GLSMRasterizer.getLineState()
         ));
-        attribToFeatures.put(GL11.GL_LIST_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_LIST_BIT, OrderedSets.of(
             // GL_LIST_BASE setting
         ));
-        attribToFeatures.put(GL13.GL_MULTISAMPLE_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL13.GL_MULTISAMPLE_BIT, OrderedSets.of(
               GLSMRasterizer.getMultisampleState()
             , GLSMRasterizer.getSampleAlphaToCoverageState()
             , GLSMRasterizer.getSampleAlphaToOneState()
@@ -271,7 +271,7 @@ public class Feature {
             // GL_SAMPLE_COVERAGE_VALUE value
             // GL_SAMPLE_COVERAGE_INVERT value
         ));
-        attribToFeatures.put(GL11.GL_PIXEL_MODE_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_PIXEL_MODE_BIT, OrderedSets.of(
             // GL_RED_BIAS and GL_RED_SCALE settings
             // GL_GREEN_BIAS and GL_GREEN_SCALE values
             // GL_BLUE_BIAS and GL_BLUE_SCALE
@@ -282,12 +282,12 @@ public class Feature {
             // GL_ZOOM_X and GL_ZOOM_Y factors
             // GL_READ_BUFFER setting
         ));
-        attribToFeatures.put(GL11.GL_POINT_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_POINT_BIT, OrderedSets.of(
               GLSMRasterizer.getPointSmoothState()
             , GLSMRasterizer.getPointSpriteState()
             , GLSMRasterizer.getPointState()
         ));
-        attribToFeatures.put(GL11.GL_POLYGON_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_POLYGON_BIT, OrderedSets.of(
               GLSMRasterizer.getCullState()
             , GLSMRasterizer.getPolygonSmoothState()
             , GLSMRasterizer.getPolygonStippleState()
@@ -296,18 +296,18 @@ public class Feature {
             , GLSMRasterizer.getPolygonOffsetPointState()
             , GLSMRasterizer.getPolygonState()
         ));
-        attribToFeatures.put(GL11.GL_POLYGON_STIPPLE_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_POLYGON_STIPPLE_BIT, OrderedSets.of(
             // Polygon stipple pattern
         ));
-        attribToFeatures.put(GL11.GL_SCISSOR_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_SCISSOR_BIT, OrderedSets.of(
               GLSMRasterizer.getScissorTest()
             , GLSMRasterizer.getScissorState()
         ));
-        attribToFeatures.put(GL11.GL_STENCIL_BUFFER_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_STENCIL_BUFFER_BIT, OrderedSets.of(
               GLSMDepthStencilAlpha.getStencilTest()
             , GLSMDepthStencilAlpha.getStencilState()
         ));
-        final Set<IStateStack<?>> textureAttribs = new HashSet<>(ImmutableSet.of(
+        final Set<IStateStack<?>> textureAttribs = new HashSet<>(OrderedSets.of(
             GLSMTextures.getActiveTextureUnitStack()
                 // GL_TEXTURE_ENV_MODE + GL_TEXTURE_ENV_COLOR — now per-unit in TexEnvState (added below)
                 // Enable bits for the four texture coordinates
@@ -338,7 +338,7 @@ public class Feature {
 
         attribToFeatures.put(GL11.GL_TEXTURE_BIT, textureAttribs);
 
-        final Set<IStateStack<?>> transformAttribs = new HashSet<>(ImmutableSet.of(
+        final Set<IStateStack<?>> transformAttribs = new HashSet<>(OrderedSets.of(
             // Coefficients of the six clipping planes
 
               GLSMMatrices.getMatrixMode()
@@ -349,7 +349,7 @@ public class Feature {
             transformAttribs.add(GLSMRasterizer.getClipPlaneStates()[i]);
         }
         attribToFeatures.put(GL11.GL_TRANSFORM_BIT, transformAttribs);
-        attribToFeatures.put(GL11.GL_VIEWPORT_BIT, ImmutableSet.of(
+        attribToFeatures.put(GL11.GL_VIEWPORT_BIT, OrderedSets.of(
 
             GLSMRasterizer.getViewportState()
         ));
