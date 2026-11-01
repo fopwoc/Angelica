@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
+
 import com.gtnewhorizons.angelica.glsm.GlslTransformUtils;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -152,7 +154,7 @@ public final class AttachmentClear {
         FullscreenPass.setScissor(rp, st, scissorRect[ScissorClamp.X], scissorRect[ScissorClamp.Y], scissorRect[ScissorClamp.W], scissorRect[ScissorClamp.H]);
 
         if (stencil) {
-            SDL_SetGPUStencilReference(rp, (byte) st.stencilClearValue);
+            StencilReference.set(rp, (byte) st.stencilClearValue);
         }
 
         if (colorTargets > 0) {

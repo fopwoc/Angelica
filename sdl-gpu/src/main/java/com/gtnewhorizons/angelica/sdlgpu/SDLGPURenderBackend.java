@@ -327,6 +327,11 @@ public class SDLGPURenderBackend extends RenderBackend {
             });
         pipelineApplier.setDeferredUploadSink(this::enqueuePreCopied);
         frameManager.setRenderPassEndHook(vertexWriteReplayer::flush);
+        frameManager.setCommandBufferReacquiredHook(() -> {
+            final ContextState st = s();
+            st.lastPushedCbVs = 0;
+            st.lastPushedCbFs = 0;
+        });
         resourceManager.setTextureReplaceHook(this::flushVertexWritesBeforeTextureChange);
         resourceManager.setTextureReleaseListener(movedSamplerCopies::releaseCopyOf);
         frameManager.setPreRenderPassHook(() -> {
@@ -4218,28 +4223,18 @@ public class SDLGPURenderBackend extends RenderBackend {
     static final float MAX_ANISOTROPY = 16.0f;
 
     private static int unknownGetInteger(int pname) {
-        synchronized (UNKNOWN_GET_INTEGER_SEEN) {
-            if (UNKNOWN_GET_INTEGER_SEEN.add(pname)) {
-                LOG.warn("getInteger: unhandled pname 0x{}, returning 0; callers that save/restore this state will corrupt it", Integer.toHexString(pname));
-            }
-        }
-        return 0;
+        throw new UnsupportedOperationException("Unsupported SDL GPU state query unknownGetInteger: pname=0x"
+                + Integer.toHexString(pname));
     }
 
-    private static final IntOpenHashSet UNKNOWN_GET_INTEGER_SEEN = new IntOpenHashSet();
     @Override public void getInteger(int pname, IntBuffer params) {
         if (params.remaining() > 0) params.put(params.position(), getInteger(pname));
     }
     private static float unknownGetFloat(int pname) {
-        synchronized (UNKNOWN_GET_FLOAT_SEEN) {
-            if (UNKNOWN_GET_FLOAT_SEEN.add(pname)) {
-                LOG.warn("getFloat: unhandled pname 0x{}, returning 0; callers reading this as a device limit will treat the feature as unavailable", Integer.toHexString(pname));
-            }
-        }
-        return 0.0f;
+        throw new UnsupportedOperationException("Unsupported SDL GPU state query unknownGetFloat: pname=0x"
+                + Integer.toHexString(pname));
     }
 
-    private static final IntOpenHashSet UNKNOWN_GET_FLOAT_SEEN = new IntOpenHashSet();
     @Override public float getFloat(int pname) {
         return switch (pname) {
             case GL11.GL_LINE_WIDTH -> 1.0f;

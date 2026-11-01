@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
+
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager.FrameState;
@@ -113,7 +115,7 @@ public final class DepthStencilReadback {
             final ByteBuffer bitValue = stack.calloc(16);
             for (int b = 0; b < STENCIL_BITS; b++) {
                 SDL_BindGPUGraphicsPipeline(rp, stencilPipelines[b]);
-                SDL_SetGPUStencilReference(rp, (byte) (1 << b));
+                StencilReference.set(rp, (byte) (1 << b));
                 bitValue.putFloat(0, (1 << b) / 255.0f);
                 SDL_PushGPUFragmentUniformData(cb, 0, bitValue);
                 SDL_DrawGPUPrimitives(rp, 3, 1, 0, 0);

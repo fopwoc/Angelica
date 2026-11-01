@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.sdl.SDL_FColor;
@@ -573,7 +575,7 @@ public final class PipelineApplier {
         }
 
         if (st.pipeline.effectiveStencilTestEnabled() && st.stencilRef != st.lastAppliedStencilRef) {
-            SDL_SetGPUStencilReference(rp, (byte) st.stencilRef);
+            StencilReference.set(rp, (byte) st.stencilRef);
             st.lastAppliedStencilRef = st.stencilRef;
         }
 

@@ -385,12 +385,15 @@ public final class FrameManager {
 
     private volatile Runnable preRenderPassHook;
     private volatile Runnable renderPassEndHook;
+    private volatile Runnable commandBufferReacquiredHook;
     private volatile Runnable beforeSubmit;
     private volatile Runnable afterPresent;
 
     public void setPreRenderPassHook(Runnable hook) { this.preRenderPassHook = hook; }
 
     public void setRenderPassEndHook(Runnable hook) { this.renderPassEndHook = hook; }
+
+    public void setCommandBufferReacquiredHook(Runnable hook) { this.commandBufferReacquiredHook = hook; }
 
     public void noteComputePassBegun() {
         final FrameState f = frame();
@@ -869,9 +872,10 @@ public final class FrameManager {
         f.currentColorTarget = 0;
         f.currentDepthTarget = 0;
 
-        if (f.frameActive) {
-            f.clearedThisFrame = false;
-        }
+        // Replacing a command buffer does not begin a new frame: existing attachment contents must load.
+        // Uniform pushes, however, belong to the new recording even if SDL recycles its native address.
+        final Runnable hook = commandBufferReacquiredHook;
+        if (hook != null) hook.run();
     }
 
     public void releaseThreadState() {
