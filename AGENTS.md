@@ -1,7 +1,8 @@
 # Angelica, `pz` branch
 
-This branch is the renderer for Julia, a Project Zomboid mod. Only `glsm`, `sdl-gpu`, and the patched SDL build
-matter here; Julia compiles them with its own Gradle build. Every other module is left untouched and unbuilt.
+This branch is the renderer for Julia, a Project Zomboid mod. Only `glsm`, `sdl-gpu`, and the patched SDL build in
+`sdl-gpu/native` matter here; Julia compiles them with its own Gradle build and keeps the build trees outside the
+fork. Every other module is left untouched and unbuilt.
 Minecraft compatibility is not preserved, and the renderer targets LWJGL3 only: no LWJGL2 API, lwjgl3ify, or
 `org.lwjglx`. The one exception is the GTNHLib binary glsm still links; Julia remaps it at load time until its used
 classes are vendored here.
