@@ -1,7 +1,7 @@
 # Angelica renderer fork
 
 This fork supplies the Java OpenGL state manager (`glsm/`) and SDL-GPU renderer (`sdl-gpu/`) used by
-[Julia for Project Zomboid](https://github.com/fopwoc/julia-pz). The `pz` branch is kept rebased on GTNewHorizons Angelica `master`.
+[Julia for Project Zomboid](https://github.com/fopwoc/julia-pz).
 It is no longer intended to build or run as a Minecraft mod.
 
 The consuming Julia repository provides the Gradle build descriptors and pins this repository under
