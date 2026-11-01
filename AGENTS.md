@@ -37,8 +37,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `ResourceManager.shouldDeferTextureUpload`: always `false`; bound uploads and inline writes share one command stream.
 - `QuadConverter`: `bufferData` instead of `bufferSubData`; earlier deferred draws keep their indices.
 - `FragmentShaderGenerator`, `FullscreenPass`: `ShaderSources` instead of Embeddium's `ShaderLoader`.
-- `Device`: reads the application's window through `WindowSource` (`setWindowSource`) instead of LWJGL2's `Display`;
-  `SDLGPURenderBackend` sizes the splash target from it.
+- `Device`: reads the application's window through `WindowSource` (`setWindowSource`) instead of LWJGL2's `Display`.
+  The window itself, its borrowing and its event loop belong to Julia.
+- `SDLGPURenderBackend.init`: creates no splash target, and the loading-checkpoint listener only flushes. The rest of
+  the Minecraft splash path (`SplashDispatcher`, `OffscreenTarget`, the splash branches) stays in place but never
+  runs.
 - `GLStateManager.capabilities`: LWJGL3 `GLCapabilities` from `GL.getCapabilities()`, installed by the backend's
   capability shim on the initializing thread.
 - `GLSMMatrices`: local GLU error codes; LWJGL3 has no GLU.

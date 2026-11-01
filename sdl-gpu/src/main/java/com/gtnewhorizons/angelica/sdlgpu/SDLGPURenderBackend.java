@@ -309,13 +309,6 @@ public class SDLGPURenderBackend extends RenderBackend {
         });
         GLSMHooks.LOADING_CHECKPOINT
             .addListener(event -> {
-                if (!GLStateManager.isSplashComplete()) {
-                    if (Thread.currentThread() == GLStateManager.getMainThread()) {
-                        SplashDispatcher.tryDispatch(this, splashTarget, false);
-                    }
-                } else if (splashTarget != null) {
-                    splashTeardownPending = true;
-                }
                 if (event.requiresSync) {
                     frameManager.requestSyncFlushOnAllRegisteredFrames();
                 } else {
@@ -371,18 +364,6 @@ public class SDLGPURenderBackend extends RenderBackend {
             presenter = new Presenter(frameManager, windowExecutor, windowPump);
             frameManager.setPresenter(presenter);
             LOG.info("SDL presenter thread enabled: presents run on '{}'", device.getWindowThread() != null ? device.getWindowThread().getName() : "window thread");
-        }
-
-        if (hasWindow()) {
-            final int splashW = Math.max(1, device.windowSource().width());
-            final int splashH = Math.max(1, device.windowSource().height());
-            final int[] maxDesktop = device.getMaxDesktopSizePixels();
-            final int splashTexW = Math.max(splashW, maxDesktop[0]);
-            final int splashTexH = Math.max(splashH, maxDesktop[1]);
-            splashTarget = new OffscreenTarget();
-            splashTarget.create(device, resourceManager, splashTexW, splashTexH, device.getSwapchainTextureFormat());
-            SplashDispatcher.seedDrawnSize(splashW, splashH);
-            LOG.info("Splash offscreen target {}x{} (window {}x{}, max desktop {}x{})", splashTexW, splashTexH, splashW, splashH, maxDesktop[0], maxDesktop[1]);
         }
 
         Lwjgl3GLCapabilitiesShim.installFunctionProvider();

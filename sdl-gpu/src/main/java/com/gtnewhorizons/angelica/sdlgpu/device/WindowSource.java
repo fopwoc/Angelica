@@ -7,19 +7,11 @@ package com.gtnewhorizons.angelica.sdlgpu.device;
 public interface WindowSource {
     WindowSource NONE = new WindowSource() {
         @Override public long window() { return 0L; }
-        @Override public int width() { return 0; }
-        @Override public int height() { return 0; }
         @Override public boolean wasResized() { return false; }
     };
 
     /** SDL window handle, or 0 while there is none. */
     long window();
-
-    /** Logical width the application renders at. */
-    int width();
-
-    /** Logical height the application renders at. */
-    int height();
 
     /** Whether the size changed since the application last reported it. */
     boolean wasResized();
