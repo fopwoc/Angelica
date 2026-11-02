@@ -53,13 +53,10 @@ public final class NamedTextureUploads {
                 || (long) z + depth > layers)
             throw new IllegalArgumentException("Named upload region outside allocated storage");
         var transfer = TextureUploadFormat.transfer(meta.glFormat());
+        var unpack = Subsystems.current().volumeUnpack();
+        var conversion = ColorUploads.conversion(format, type, meta.sdlFormat(), unpack.swapBytes);
         boolean bgra = transfer.format() == GL_RGBA && format == GL_BGRA && type == GL_UNSIGNED_BYTE;
-        // GL clamps float client data into normalized 8-bit storage; PZ3D fills RGBA8 arrays from float tables.
-        boolean unorm = format == transfer.format()
-                && type == GL_FLOAT
-                && transfer.type() == GL_UNSIGNED_BYTE
-                && meta.glFormat() != GL_RGB8;
-        if ((!bgra && format != transfer.format()) || (type != transfer.type() && !unorm))
+        if (conversion == null && ((!bgra && format != transfer.format()) || type != transfer.type()))
             throw new UnsupportedOperationException("Named texture upload conversion not implemented: storage="
                     + meta.glFormat() + " format=" + format + " type=" + type);
         if (width == 0 || height == 0 || depth == 0) return;
@@ -68,10 +65,7 @@ public final class NamedTextureUploads {
             throw new UnsupportedOperationException("Client upload with a pixel-unpack buffer bound");
         if (data == null || !data.isDirect())
             throw new IllegalArgumentException("Named upload requires direct client data");
-        var unpack = Subsystems.current().volumeUnpack();
-        if (unorm && unpack.swapBytes)
-            throw new UnsupportedOperationException("Byte-swapped float conversion to normalized storage");
-        int clientBytes = unorm ? transfer.bytes() * Float.BYTES : transfer.bytes();
+        int clientBytes = conversion != null ? conversion.sourceBytes() : transfer.bytes();
         UnpackLayout layout = UnpackLayout.of(
                 width,
                 height,
@@ -85,7 +79,7 @@ public final class NamedTextureUploads {
                     "Named upload client data is too short: needs " + layout.requiredBytes());
         boolean rgb8 = meta.glFormat() == GL_RGB8;
         boolean rgb32 = meta.glFormat() == GL_RGB32I || meta.glFormat() == GL_RGB32UI;
-        int outBytes = rgb8 ? 4 : rgb32 ? 16 : transfer.bytes();
+        int outBytes = conversion != null ? conversion.destinationBytes() : rgb8 ? 4 : rgb32 ? 16 : transfer.bytes();
         int rowBytes = Math.multiplyExact(width, outBytes),
                 sliceBytes = Math.multiplyExact(rowBytes, height),
                 size = Math.multiplyExact(sliceBytes, depth);
@@ -106,14 +100,8 @@ public final class NamedTextureUploads {
                                 + layer * layout.imageStride()
                                 + row * layout.rowStride());
                         int destination = layer * sliceBytes + row * rowBytes;
-                        if (unorm) {
-                            for (int i = 0; i < rowBytes; i++) {
-                                float value = MemoryUtil.memGetFloat(
-                                        MemoryUtil.memAddress(data, source) + (long) i * Float.BYTES);
-                                // NaN compares false on both sides and lands at zero, as GL allows.
-                                float clamped = value > 0 ? Math.min(value, 1) : 0;
-                                mapped.put(destination + i, (byte) Math.round(clamped * 255));
-                            }
+                        if (conversion != null) {
+                            conversion.copy(data, source, mapped, destination, width);
                             continue;
                         }
                         if (!bgra && !rgb8 && !rgb32 && !unpack.swapBytes) {

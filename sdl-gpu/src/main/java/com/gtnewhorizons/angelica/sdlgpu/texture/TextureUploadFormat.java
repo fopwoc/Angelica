@@ -16,10 +16,10 @@ public record TextureUploadFormat(int format, int type, int bytes) {
             case GL_SRGB8_ALPHA8 -> SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB;
             case GL_R16F -> SDL_GPU_TEXTUREFORMAT_R16_FLOAT;
             case GL_RG16F -> SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT;
-            case GL_RGBA16F -> SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
+            case GL_RGB16F, GL_RGBA16F -> SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
             case GL_R32F -> SDL_GPU_TEXTUREFORMAT_R32_FLOAT;
             case GL_RG32F -> SDL_GPU_TEXTUREFORMAT_R32G32_FLOAT;
-            case GL_RGBA32F -> SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
+            case GL_RGB32F, GL_RGBA32F -> SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
             case GL_R8I -> SDL_GPU_TEXTUREFORMAT_R8_INT;
             case GL_RG8I -> SDL_GPU_TEXTUREFORMAT_R8G8_INT;
             case GL_RGBA8I -> SDL_GPU_TEXTUREFORMAT_R8G8B8A8_INT;
@@ -65,9 +65,11 @@ public record TextureUploadFormat(int format, int type, int bytes) {
             case GL_RGBA8, GL_SRGB8_ALPHA8 -> new TextureUploadFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
             case GL_R16F -> new TextureUploadFormat(GL_RED, GL_HALF_FLOAT, 2);
             case GL_RG16F -> new TextureUploadFormat(GL_RG, GL_HALF_FLOAT, 4);
+            case GL_RGB16F -> new TextureUploadFormat(GL_RGB, GL_HALF_FLOAT, 6);
             case GL_RGBA16F -> new TextureUploadFormat(GL_RGBA, GL_HALF_FLOAT, 8);
             case GL_R32F -> new TextureUploadFormat(GL_RED, GL_FLOAT, 4);
             case GL_RG32F -> new TextureUploadFormat(GL_RG, GL_FLOAT, 8);
+            case GL_RGB32F -> new TextureUploadFormat(GL_RGB, GL_FLOAT, 12);
             case GL_RGBA32F -> new TextureUploadFormat(GL_RGBA, GL_FLOAT, 16);
             case GL_R8I -> new TextureUploadFormat(GL_RED_INTEGER, GL_BYTE, 1);
             case GL_RG8I -> new TextureUploadFormat(GL_RG_INTEGER, GL_BYTE, 2);

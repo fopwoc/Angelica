@@ -268,6 +268,8 @@ public final class PixelOps {
 
     public static ByteBuffer prepareUploadBuffer(int format, int type, int dstSdlFormat, ByteBuffer src, int width, int height) {
         if (src == null) return null;
+        final ByteBuffer converted = com.gtnewhorizons.angelica.sdlgpu.texture.ColorUploads.prepare(format, type, dstSdlFormat, src, width, height);
+        if (converted != null) return converted;
         if (dstSdlFormat == SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM) return prepareRgb10A2Upload(format, type, src, width, height);
         final boolean storageBgra = isBgraSdlFormat(dstSdlFormat);
         final ByteBuffer expanded = expandToRGBA(format, src, width, height);

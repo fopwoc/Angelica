@@ -2575,6 +2575,8 @@ public final class ResourceManager {
     }
 
     public static int mapTextureFormat(int glFormat, int preferredD24, int preferredD24S8) {
+        final int promoted = com.gtnewhorizons.angelica.sdlgpu.texture.TextureStorageFormat.promotedColor(glFormat);
+        if (promoted != SDL_GPU_TEXTUREFORMAT_INVALID) return promoted;
         final int mapped = lookupTextureFormat(glFormat, preferredD24, preferredD24S8);
         if (mapped != SDL_GPU_TEXTUREFORMAT_INVALID) return mapped;
         synchronized (UNMAPPED_TEXTURE_FORMAT_SEEN) {

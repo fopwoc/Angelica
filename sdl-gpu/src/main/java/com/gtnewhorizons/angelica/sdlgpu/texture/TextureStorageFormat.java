@@ -10,6 +10,14 @@ import java.util.function.IntPredicate;
 public final class TextureStorageFormat {
     private TextureStorageFormat() {}
 
+    public static int promotedColor(int format) {
+        return switch (format) {
+            case GL_RGB16F -> SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT;
+            case GL_RGB32F -> SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT;
+            default -> SDL_GPU_TEXTUREFORMAT_INVALID;
+        };
+    }
+
     public static int select(int format, IntPredicate supported) {
         int exact = TextureUploadFormat.storage(format);
         if (supported.test(exact)) return exact;

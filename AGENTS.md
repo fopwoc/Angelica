@@ -137,6 +137,11 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `SamplerBinder` and `ComputeBinder`: typed incomplete-sampler handles come directly from `BufferTextureHooks`;
   internal fallback textures never borrow names from the GL object namespace.
 
+- `ResourceManager.mapTextureFormat`: `TextureStorageFormat.promotedColor` preserves RGB floating-point storage by
+  promoting its physical allocation to RGBA of the same precision.
+- `PixelOps.prepareUploadBuffer`: `ColorUploads.prepare` converts scalar color types and missing channels into the
+  physical storage layout; named uploads share the same conversion code.
+
 - `PixelOps.applyUnpackPixelStore`: owned `PixelUnpack.requireSource` validates the full client span before any
   unpack allocation/read and includes buffer bounds, dimensions and pixel-store settings in failures.
   Owned `PixelUnpack.isTightlyPacked` keeps default row padding on the conversion path;
