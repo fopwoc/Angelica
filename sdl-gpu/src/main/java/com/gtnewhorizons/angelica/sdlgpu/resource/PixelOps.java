@@ -312,6 +312,7 @@ public final class PixelOps {
         if (src == null || ps == null || ps.isDefault()) return src;
         final int pixelBytes = glPixelSize(format, type);
         if (pixelBytes <= 0) return src;
+        com.gtnewhorizons.angelica.sdlgpu.texture.PixelUnpack.requireSource(src, width, height, format, type, ps);
         final int srcStride = alignedRowStride(ps.unpackRowLength > 0 ? ps.unpackRowLength : width, pixelBytes, ps.unpackAlignment);
         final int dstStride = width * pixelBytes;
         final int totalDst = dstStride * height;
