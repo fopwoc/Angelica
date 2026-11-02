@@ -5,11 +5,13 @@ import static org.lwjgl.sdl.SDLGPU.SDL_DrawGPUPrimitivesIndirect;
 
 import com.gtnewhorizons.angelica.glsm.GLSMDraws;
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
+import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
+import com.gtnewhorizons.angelica.sdlgpu.geometry.GeometryIndirect;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
 
-/** Commands stay GPU-resident; padded command streams use one native indirect call per record. */
+/** Ordinary indirect commands stay GPU-resident; geometry programs route through bounded compute replay. */
 public final class IndirectDraws {
     private IndirectDraws() {}
 
@@ -35,7 +37,8 @@ public final class IndirectDraws {
             throw new IllegalArgumentException("Indirect commands outside allocated GPU buffer");
         try (var _ = Upstream.drawLock()) {
             GLSMDraws.preDraw(GLStateManager.ctx(), mode);
-            draw(state, mode, buffer, offset, count, step);
+            if (Subsystems.current().geometryPrograms().current()) GeometryIndirect.arrays(mode, offset, count, step);
+            else draw(state, mode, buffer, offset, count, step);
         }
     }
 

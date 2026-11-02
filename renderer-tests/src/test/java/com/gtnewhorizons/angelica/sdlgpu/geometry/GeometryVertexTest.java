@@ -80,6 +80,15 @@ class GeometryVertexTest {
     }
 
     @Test
+    void compilesInstancedVertexIdsWithoutChangingGeometryInvocationIds() {
+        String source = VERTEX.replace(
+                "float(gl_VertexID)", "float(gl_VertexID+gl_InstanceID+gl_BaseInstance+gl_DrawID+gl_BaseVertex)");
+        var plan =
+                GeometryVertex.lower(source, GeometryCompute.lower(GEOMETRY, GeometryComputeTest.BINDINGS), Map.of());
+        GeometryComputeTest.compile(plan.source());
+    }
+
+    @Test
     void reservesExplicitAndBoundMatrixLocationsBeforeAutomaticAssignment() {
         var source = VERTEX.replace("layout(location=0) ", "").replace("layout(location=4) ", "");
         var plan = GeometryVertex.lower(
@@ -103,7 +112,7 @@ class GeometryVertexTest {
                         VERTEX.replace("void main()", "uniform sampler2D texture; void main()"), kernel, Map.of()));
         assertThrows(
                 UnsupportedOperationException.class,
-                () -> GeometryVertex.lower(VERTEX.replace("gl_VertexID", "gl_DrawID"), kernel, Map.of()));
+                () -> GeometryVertex.lower(VERTEX.replace("gl_VertexID", "gl_ViewIndex"), kernel, Map.of()));
         assertThrows(
                 IllegalArgumentException.class,
                 () -> GeometryVertex.lower(VERTEX.replace("out vec3 incoming", "out vec2 incoming"), kernel, Map.of()));

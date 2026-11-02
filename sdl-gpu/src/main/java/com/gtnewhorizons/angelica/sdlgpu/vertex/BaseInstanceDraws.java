@@ -2,8 +2,8 @@ package com.gtnewhorizons.angelica.sdlgpu.vertex;
 
 import com.gtnewhorizons.angelica.glsm.GLSMDraws;
 import com.gtnewhorizons.angelica.glsm.GLTypes;
-import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
+import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 
 /** GL base instance biases attribute records after division, while the shader instance ID stays zero-based. */
 public final class BaseInstanceDraws {
@@ -13,6 +13,10 @@ public final class BaseInstanceDraws {
     private static final Offsets SHIFTED = new Offsets();
 
     private BaseInstanceDraws() {}
+
+    public static int base() {
+        return base;
+    }
 
     public static void glDrawArraysInstancedBaseInstance(int mode, int first, int count, int instances, int base) {
         Upstream.context();

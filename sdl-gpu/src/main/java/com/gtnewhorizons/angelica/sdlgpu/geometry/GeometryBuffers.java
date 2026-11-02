@@ -23,7 +23,9 @@ final class GeometryBuffers {
         }
     }
 
-    static Inputs inputs(GeometryVertex.Plan plan, int first, int count, int indexType, long indices, int baseVertex) {
+    static Inputs inputs(GeometryVertex.Plan plan, GeometryDraw draw) {
+        int first = draw.first(), count = draw.count(), indexType = draw.indexType(), baseVertex = draw.baseVertex();
+        long indices = draw.indices();
         var state = Upstream.context();
         var vao = state.currentVao;
         var resources = Upstream.resources();
@@ -49,6 +51,9 @@ final class GeometryBuffers {
                     || indexBytes != 0 && indices + (long) count * indexBytes > indexSize)
                 throw new IllegalArgumentException("Geometry index range exceeds storage");
             data.putInt(16, (int) indices).putInt(20, (int) indexSize);
+            data.putInt(32, draw.primitivesPerInstance())
+                    .putInt(36, draw.baseInstance())
+                    .putInt(40, draw.drawId());
             for (var input : plan.attributes())
                 for (int column = 0; column < input.columns(); column++) {
                     int location = input.location() + column, at = (3 + location * 2) * 16;

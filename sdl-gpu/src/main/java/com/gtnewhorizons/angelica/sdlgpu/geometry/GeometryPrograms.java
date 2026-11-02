@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL43.*;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
 import com.gtnewhorizons.angelica.sdlgpu.shader.*;
+import com.gtnewhorizons.angelica.sdlgpu.vertex.BaseInstanceDraws;
 import java.nio.ByteBuffer;
 import java.util.*;
 import org.lwjgl.opengl.GL11;
@@ -138,13 +139,19 @@ public final class GeometryPrograms implements AutoCloseable {
     }
 
     public boolean draw(int mode, int first, int count, int type, long indices, int baseVertex, int instances) {
+        if (!current()) return false;
+        return draw(
+                mode,
+                new GeometryDraw(first, count, type, indices, baseVertex, instances, BaseInstanceDraws.base(), 0));
+    }
+
+    boolean draw(int mode, GeometryDraw draw) {
         var executable = programs.get(Upstream.context().boundProgram);
         if (executable == null) return false;
-        if (mode != GL_TRIANGLES || instances != 1)
-            throw new UnsupportedOperationException("Geometry draw wiring requires non-instanced GL_TRIANGLES");
+        if (mode != GL_TRIANGLES) throw new UnsupportedOperationException("Geometry draw wiring requires GL_TRIANGLES");
         if (Upstream.context().primitiveRestartEnabled)
             throw new UnsupportedOperationException("Geometry primitive restart is not wired yet");
-        if (count > 0) executable.draw(first, count, type, indices, baseVertex);
+        if (draw.primitives() != 0) executable.draw(draw);
         return true;
     }
 

@@ -129,6 +129,13 @@ public final class GeometryVertex {
         names.put("gl_Position", "_vertex_position");
         names.put("gl_VertexID", "_vertex_id");
         names.put("gl_InstanceID", "_vertex_instance");
+        names.put("gl_InstanceIDARB", "_vertex_instance");
+        names.put("gl_DrawID", "_vertex_draw");
+        names.put("gl_DrawIDARB", "_vertex_draw");
+        names.put("gl_BaseInstance", "_vertex_base_instance");
+        names.put("gl_BaseInstanceARB", "_vertex_base_instance");
+        names.put("gl_BaseVertex", "_vertex_base_vertex");
+        names.put("gl_BaseVertexARB", "_vertex_base_vertex");
         for (int i = 0; i < tokens.size(); i++) {
             var token = tokens.get(i);
             if (removed.get(token.getTokenIndex())
@@ -139,7 +146,8 @@ public final class GeometryVertex {
             String replacement = names.get(text);
             if (replacement != null) rewrite.replace(token.getTokenIndex(), replacement);
         }
-        var header = new StringBuilder("vec4 _vertex_position; int _vertex_id, _vertex_instance; uint _vertex_bad;\n")
+        var header = new StringBuilder(
+                        "vec4 _vertex_position; int _vertex_id, _vertex_instance, _vertex_draw, _vertex_base_instance, _vertex_base_vertex; uint _vertex_bad;\n")
                 .append(fetchSource());
         for (var input : inputs)
             header.append(input.field().type())
@@ -153,7 +161,8 @@ public final class GeometryVertex {
                     .append(";\n");
         header.append(rewrite.getText())
                 .append("\nvoid _vertex_prepare(uint primitive,int corner) {\n")
-                .append("_vertex_instance=0; uint element=primitive*3u+uint(corner); uvec4 draw=_vertex_meta[0];\n")
+                .append(
+                        "_vertex_instance=int(primitive/_vertex_meta[2].x); primitive%=_vertex_meta[2].x;\n_vertex_draw=int(_vertex_meta[2].z); _vertex_base_instance=int(_vertex_meta[2].y); _vertex_base_vertex=int(_vertex_meta[0].z);\nuint element=primitive*3u+uint(corner); uvec4 draw=_vertex_meta[0];\n")
                 .append(
                         "uint index=draw.w==0u?draw.x+element:_vertex_read(4u,_vertex_meta[1].x+element*draw.w,draw.w);\n_vertex_id=int(index)+int(draw.z);\n");
         for (var input : inputs) {
@@ -194,7 +203,7 @@ public final class GeometryVertex {
         b = code.indexOf("_geometry_stage();", a);
         if (a < 0 || b < 0) throw new IllegalArgumentException("Geometry input transport load missing");
         code = code.substring(0, a)
-                + "_vertex_bad=0u; for(int corner=0;corner<3;corner++) _vertex_prepare(primitive,corner);\n"
+                + "_geometry_primitive_in=int(primitive%_vertex_meta[2].x)+_geometry_primitive_base; _geometry_primitive_out=_geometry_primitive_in;\n_vertex_bad=0u; for(int corner=0;corner<3;corner++) _vertex_prepare(primitive,corner);\n"
                 + "if(_vertex_bad!=0u) { _geometry_counts[_geometry_job]=uvec4(0,0,2,0); return; }\n"
                 + code.substring(b);
         int main = code.indexOf("void main()");
@@ -242,7 +251,12 @@ public final class GeometryVertex {
                     if(vertex<0) {_vertex_bad=1u;return uvec4(0);}
                     uint components=format&7u,kind=(format>>3u)&15u,stream=(format>>16u)&3u;
                     bool integer=(format&256u)!=0u,normalized=(format&128u)!=0u;
-                    uint index=info.z==0u?uint(vertex):uint(_vertex_instance)/info.z;
+                    uint index=uint(vertex);
+                    if(info.z!=0u) {
+                        uint instance=uint(_vertex_instance)/info.z,base=_vertex_meta[2].y;
+                        if(instance>0xffffffffu-base) {_vertex_bad=1u;return uvec4(0);}
+                        index=instance+base;
+                    }
                     uint bytes=kind==0u||kind==5u||kind==6u?4u:kind==1u||kind==2u?1u:2u;
                     uvec4 result=integer?uvec4(0,0,0,1):uvec4(0,0,0,floatBitsToUint(1.0));
                     for(uint component=0u;component<components;component++) {
