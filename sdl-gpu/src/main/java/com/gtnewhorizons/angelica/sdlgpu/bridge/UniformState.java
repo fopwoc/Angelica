@@ -25,6 +25,9 @@ final class UniformState {
         if (kind == ShaderManager.ProgramObject.LOCATION_KIND_IMAGE) {
             return integer(program.imageTextureUnits.containsKey(name) ? program.imageTextureUnits.getInt(name) : 0);
         }
+        if (program.externalUboBinding >= 0)
+            throw new UnsupportedOperationException("Numeric uniform query requires external uniform-buffer readback: "
+                    + name + " (binding " + program.externalUboBinding + ")");
         var info = program.anyBlockMemberInfo(location);
         if (info == null) info = program.locationToMemberInfo.get(location);
         if (info == null) throw new UnsupportedOperationException("Uniform has no reflected numeric type: " + name);

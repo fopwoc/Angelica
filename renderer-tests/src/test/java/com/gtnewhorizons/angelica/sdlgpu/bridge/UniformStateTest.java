@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
 import com.gtnewhorizons.angelica.sdlgpu.shader.UniformStaging;
+import java.nio.IntBuffer;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.util.spvc.Spvc;
 
@@ -39,6 +40,37 @@ class UniformStateTest {
         program.locationKind = new byte[] {ShaderManager.ProgramObject.LOCATION_KIND_SAMPLER};
         program.locationSamplerUnit = new int[] {7};
         assertEquals(7, UniformState.read(program, staging(new float[] {99}), 0).scalarInt());
+    }
+
+    @Test
+    void readsOpaqueUniformAssignmentsWhenTheProgramAlsoUsesAnExternalUniformBuffer() {
+        var program = program(1, 1, 0);
+        program.externalUboBinding = 3;
+        program.locationKind = new byte[] {ShaderManager.ProgramObject.LOCATION_KIND_SAMPLER};
+        program.locationSamplerUnit = new int[] {0};
+        int[] result = {-1, 99};
+        UniformState.read(program, staging(new float[] {123}), 0).write(result);
+        assertArrayEquals(new int[] {0, 99}, result);
+        program.locationSamplerUnit[0] = 7;
+        var integers = IntBuffer.allocate(3);
+        integers.position(1);
+        UniformState.read(program, staging(null), 0).write(integers);
+        assertEquals(7, integers.get(1));
+        assertEquals(1, integers.position());
+        program.locationKind[0] = ShaderManager.ProgramObject.LOCATION_KIND_IMAGE;
+        assertEquals(0, UniformState.read(program, staging(null), 0).scalarInt());
+        program.imageTextureUnits.put("value", 9);
+        assertEquals(9, UniformState.read(program, staging(null), 0).scalarInt());
+        assertThrows(IllegalArgumentException.class, () -> UniformState.read(program, staging(null), -1));
+    }
+
+    @Test
+    void doesNotReturnStagedNumericValuesForAnExternalUniformBuffer() {
+        var program = program(1, 1, 0);
+        program.externalUboBinding = 3;
+        var failure = assertThrows(
+                UnsupportedOperationException.class, () -> UniformState.read(program, staging(new float[] {123}), 0));
+        assertTrue(failure.getMessage().contains("value (binding 3)"));
     }
 
     private static ShaderManager.ProgramObject program(int vector, int columns, int arrayLength) {
