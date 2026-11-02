@@ -35,6 +35,7 @@ import com.gtnewhorizons.angelica.glsm.GLStateManager;
 import com.gtnewhorizons.angelica.glsm.backend.BackendOptions;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameCommands;
+import com.gtnewhorizons.angelica.sdlgpu.geometry.GeometryViewports;
 import com.gtnewhorizons.angelica.sdlgpu.layer.ShaderLayer;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
 import com.gtnewhorizons.angelica.sdlgpu.shader.SamplerResources;
@@ -108,7 +109,7 @@ public final class HostedBackend extends ShaderLayer {
             case GL_UNPACK_SWAP_BYTES -> subsystems().volumeUnpack().swapBytes ? GL_TRUE : GL_FALSE;
             case GL_MAX_VERTEX_ATTRIB_BINDINGS -> ContextState.MAX_VERTEX_ATTRIBS;
             // SDL GPU has one viewport and scissor per pass; see ViewportBridge.
-            case GL_MAX_VIEWPORTS -> 1;
+            case GL_MAX_VIEWPORTS -> GeometryViewports.LIMIT;
             case GL_MAX_TEXTURE_BUFFER_SIZE -> subsystems().bufferTextures().limit();
             case GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT ->
                 subsystems().bufferTextures().alignment();

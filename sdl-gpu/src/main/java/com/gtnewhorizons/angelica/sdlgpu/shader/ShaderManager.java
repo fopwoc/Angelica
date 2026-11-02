@@ -1121,7 +1121,7 @@ public final class ShaderManager {
         return true;
     }
 
-    private void releaseProgramGpuResources(ProgramObject prog) {
+    public void releaseProgramGpuResources(ProgramObject prog) {
         final long dev = device.getDevice();
         for (VertexVariant v : prog.vertexVariants.values()) {
             if (v.sdlShader != 0) SDL_ReleaseGPUShader(dev, v.sdlShader);
@@ -1749,8 +1749,7 @@ public final class ShaderManager {
                 final SpvcReflectedResource.Buffer ubos = SpvcReflectedResource.create(pUboList.get(0), uboCount);
                 for (int i = 0; i < uboCount; i++) {
                     final SpvcReflectedResource ubo = ubos.get(i);
-                    final int uboBinding = Spvc.spvc_compiler_get_decoration(compiler, ubo.id(), Spv.SpvDecorationBinding);
-                    if (uboBinding != 0) continue;
+                    if (!DefaultUniforms.reflect(compiler, resources, ubo, stack)) continue;
                     final long baseTypeHandle = Spvc.spvc_compiler_get_type_handle(compiler, ubo.base_type_id());
                     if (Spvc.spvc_compiler_get_declared_struct_size(compiler, baseTypeHandle, pSize) == Spvc.SPVC_SUCCESS) {
                         uboSize = (int) pSize.get(0);

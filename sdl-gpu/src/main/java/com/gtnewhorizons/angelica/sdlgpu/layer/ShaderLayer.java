@@ -17,6 +17,8 @@ import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderPrograms;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL40;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -121,7 +123,9 @@ public abstract class ShaderLayer extends TextureLayer {
 
     @Override
     public void linkProgram(int program) {
+        uniformEntriesCache.remove(program);
         if (subsystems().shaderPrograms().link(program)) {
+            if (subsystems().geometryPrograms().contains(program)) return;
             ProgramLinkState.reset(Upstream.shaders().getProgram(program));
             super.linkProgram(program);
             if (super.getProgrami(program, GL_LINK_STATUS) == 0)
@@ -145,7 +149,7 @@ public abstract class ShaderLayer extends TextureLayer {
 
     @Override
     public void useProgram(int program) {
-        super.useProgram(program);
+        if (!subsystems().geometryPrograms().bind(program)) super.useProgram(program);
         subsystems().shaderPrograms().releaseDeletedPrograms();
     }
 
@@ -157,7 +161,30 @@ public abstract class ShaderLayer extends TextureLayer {
     }
 
     @Override
+    public String getActiveAttrib(int program, int index, int capacity, IntBuffer sizeType) {
+        String name = super.getActiveAttrib(program, index, capacity, sizeType);
+        if (subsystems().geometryPrograms().contains(program) && sizeType != null && sizeType.remaining() >= 2)
+            sizeType.put(
+                    sizeType.position() + 1, subsystems().geometryPrograms().attributeType(program, index));
+        return name;
+    }
+
+    @Override
+    public void getActiveAttrib(
+            int program, int index, IntBuffer length, IntBuffer size, IntBuffer type, ByteBuffer name) {
+        super.getActiveAttrib(program, index, length, size, type, name);
+        if (subsystems().geometryPrograms().contains(program) && type != null && type.hasRemaining())
+            type.put(type.position(), subsystems().geometryPrograms().attributeType(program, index));
+    }
+
+    @Override
     public int getProgrami(int program, int parameter) {
+        if (subsystems().geometryPrograms().contains(program)
+                && (parameter == GL32.GL_GEOMETRY_INPUT_TYPE
+                        || parameter == GL32.GL_GEOMETRY_OUTPUT_TYPE
+                        || parameter == GL32.GL_GEOMETRY_VERTICES_OUT
+                        || parameter == GL40.GL_GEOMETRY_SHADER_INVOCATIONS))
+            return subsystems().geometryPrograms().parameter(program, parameter);
         if (parameter == GL_ACTIVE_UNIFORM_MAX_LENGTH
                 && subsystems().shaderPrograms().renamedTexture(program)) {
             int longest = 0;

@@ -6,7 +6,12 @@ public final class GeometryRaster {
 
     public record Bindings(int vertices, int corners, int control) {
         public Bindings {
-            if (vertices < 0 || corners < 0 || control < 0 || vertices == corners)
+            if (vertices < 0
+                    || corners < 0
+                    || control < 0
+                    || vertices == corners
+                    || vertices == control
+                    || corners == control)
                 throw new IllegalArgumentException("Geometry raster storage bindings must be distinct");
         }
     }
@@ -16,7 +21,7 @@ public final class GeometryRaster {
         source.append("""
                 layout(std430,binding=%d) readonly buffer _GeometryVertices { _GeometryOutput _geometry_vertices[]; };
                 layout(std430,binding=%d) readonly buffer _GeometryCorners { uvec4 _geometry_corners[]; };
-                layout(std140,binding=%d) uniform _GeometryRasterControl { uint _geometry_viewport; uint _geometry_layer; uint _geometry_corner_first; };
+                layout(std430,binding=%d) readonly buffer _GeometryRasterControl { uint _geometry_viewport; uint _geometry_layer; uint _geometry_corner_first; };
                 flat out int _geometry_primitive_id;
                 """.formatted(bindings.vertices(), bindings.corners(), bindings.control()));
         for (var field : layout.outputs()) {
@@ -32,6 +37,11 @@ public final class GeometryRaster {
                     .append(field.name())
                     .append(";\n");
         }
+        int arity = switch (layout.output()) {
+            case POINTS -> 1;
+            case LINE_STRIP -> 2;
+            case TRIANGLE_STRIP -> 3;
+        };
         source.append("""
                 void main() {
                     uvec4 corner=_geometry_corners[_geometry_corner_first+uint(gl_VertexID)];
@@ -42,9 +52,19 @@ public final class GeometryRaster {
                     gl_Position=_geometry_vertices[corner.x]._geometry_position;
                     _geometry_primitive_id=int(corner.w);
                 """);
+        source.append("uint provoking=(_geometry_corner_first+uint(gl_VertexID)/")
+                .append(arity)
+                .append("u*")
+                .append(arity)
+                .append("u)+")
+                .append(arity - 1)
+                .append("u;\nuvec4 flatCorner=_geometry_corners[provoking];\n");
         for (var field : layout.outputs())
             source.append(field.name())
-                    .append("=_geometry_vertices[corner.x].")
+                    .append(
+                            field.interpolation() == GeometryField.Interpolation.FLAT
+                                    ? "=_geometry_vertices[flatCorner.x]."
+                                    : "=_geometry_vertices[corner.x].")
                     .append(field.name())
                     .append(";\n");
         return source.append("}\n").toString();

@@ -2,6 +2,7 @@ package com.gtnewhorizons.angelica.sdlgpu.shader;
 
 import static org.lwjgl.opengl.GL20.*;
 
+import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import org.lwjgl.opengl.GL32;
 
 /** Owns GL shader-object attachments; only complete translated stages enter the upstream shader manager. */
 public final class ShaderPrograms implements AutoCloseable {
@@ -154,6 +156,7 @@ public final class ShaderPrograms implements AutoCloseable {
             int id = iterator.nextInt();
             if (Upstream.shaders().getProgram(id) != null) continue;
             var program = programs.remove(id);
+            Subsystems.current().geometryPrograms().released(id);
             for (int shader : program.attachments) release(shader);
             iterator.remove();
         }
@@ -185,6 +188,18 @@ public final class ShaderPrograms implements AutoCloseable {
         } catch (IllegalStateException failure) {
             throw translationFailure(id, failure.getMessage(), failure);
         }
+        if (linked.stages().containsKey(GL32.GL_GEOMETRY_SHADER)) {
+            for (int old : program.stages) Upstream.detachShader(id, old);
+            program.stages.clear();
+            try {
+                Subsystems.current().geometryPrograms().link(id, linked.stages(), program.initializers);
+            } catch (RuntimeException failure) {
+                throw translationFailure(id, "Geometry compute emulation: " + failure.getMessage(), failure);
+            }
+            program.renamedTexture = renamedTexture;
+            return true;
+        }
+        Subsystems.current().geometryPrograms().released(id);
         var stages = new ArrayList<Integer>();
         try {
             for (var stage : linked.stages().entrySet()) {

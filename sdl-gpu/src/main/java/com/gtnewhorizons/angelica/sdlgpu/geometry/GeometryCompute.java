@@ -6,14 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.taumc.glsl.grammar.GLSLLexer;
 
 /**
  * Lowers a preprocessed, bounded geometry stage to compute. Vertex input records are produced separately;
@@ -35,49 +29,19 @@ public final class GeometryCompute {
 
     public record Kernel(GeometryLayout layout, Bindings bindings, String source) {}
 
-    private record Declaration(int start, int end, List<Token> tokens) {}
-
     private GeometryCompute() {}
 
     public static Kernel lower(String preprocessed, Bindings bindings) {
-        if (preprocessed.contains("_geometry_"))
-            throw new IllegalArgumentException("Reserved geometry transport identifier");
-        var source = new StringBuilder();
-        for (String line : preprocessed.split("\\R")) {
-            if (line.stripLeading().startsWith("#")) {
-                if (line.matches("\\s*#\\s*(?:version|line)\\b.*")) continue;
-                throw new UnsupportedOperationException(
-                        "Geometry compute requires preprocessed source without directives");
-            }
-            source.append(line).append('\n');
-        }
-        var lexer = new GLSLLexer(CharStreams.fromString(source.toString()));
-        lexer.removeErrorListeners();
-        lexer.addErrorListener(new BaseErrorListener() {
-            @Override
-            public void syntaxError(
-                    Recognizer<?, ?> recognizer,
-                    Object symbol,
-                    int line,
-                    int column,
-                    String message,
-                    RecognitionException failure) {
-                throw new IllegalArgumentException("Geometry token at " + line + ":" + column + ": " + message);
-            }
-        });
-        var stream = new CommonTokenStream(lexer);
-        stream.fill();
-        var tokens = stream.getTokens().stream()
-                .filter(t -> t.getChannel() == Token.DEFAULT_CHANNEL && t.getType() != Token.EOF)
-                .toList();
-        var rewrite = new TokenStreamRewriter(stream);
+        var parsed = GeometrySyntax.parse(preprocessed);
+        var tokens = parsed.tokens();
+        var rewrite = new TokenStreamRewriter(parsed.stream());
         var removed = new BitSet();
         var layouts = new LinkedHashMap<String, String>();
         var inputs = new ArrayList<GeometryField>();
         var outputs = new ArrayList<GeometryField>();
-        for (var declaration : declarations(tokens)) {
+        for (var declaration : parsed.declarations()) {
             var words = declaration.tokens().stream().map(Token::getText).toList();
-            int storage = storage(words);
+            int storage = GeometrySyntax.storage(words);
             if (storage < 0) {
                 for (int i = 0; i + 2 < words.size(); i++) {
                     if (!words.get(i).equals("binding") || !words.get(i + 1).equals("=")) continue;
@@ -176,41 +140,6 @@ public final class GeometryCompute {
             if (replacement != null) rewrite.replace(token.getTokenIndex(), replacement);
         }
         return new Kernel(layout, bindings, generate(layout, bindings, rewrite.getText()));
-    }
-
-    private static int storage(List<String> words) {
-        int depth = 0;
-        for (int i = 0; i < words.size(); i++) {
-            String word = words.get(i);
-            if (word.equals("(")) depth++;
-            else if (word.equals(")")) depth--;
-            else if (depth == 0 && (word.equals("in") || word.equals("out"))) return i;
-        }
-        return -1;
-    }
-
-    private static List<Declaration> declarations(List<Token> tokens) {
-        var result = new ArrayList<Declaration>();
-        int start = 0, braces = 0;
-        boolean function = false;
-        for (int i = 0; i < tokens.size(); i++) {
-            String text = tokens.get(i).getText();
-            if (text.equals("{")) {
-                if (braces == 0) function = i > 0 && tokens.get(i - 1).getText().equals(")");
-                braces++;
-            } else if (text.equals("}")) {
-                if (--braces < 0) throw new IllegalArgumentException("Unbalanced geometry braces");
-                if (braces == 0 && function) start = i + 1;
-            } else if (text.equals(";") && braces == 0) {
-                result.add(new Declaration(
-                        tokens.get(start).getTokenIndex(),
-                        tokens.get(i).getTokenIndex(),
-                        tokens.subList(start, i + 1)));
-                start = i + 1;
-            }
-        }
-        if (braces != 0) throw new IllegalArgumentException("Unbalanced geometry braces");
-        return result;
     }
 
     private static String generate(GeometryLayout layout, Bindings bindings, String body) {

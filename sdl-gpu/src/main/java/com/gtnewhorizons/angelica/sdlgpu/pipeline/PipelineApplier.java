@@ -428,6 +428,7 @@ public final class PipelineApplier {
     }
 
     private boolean applyPipelineAndStateImpl(ContextState st, FrameState f) {
+        com.gtnewhorizons.angelica.sdlgpu.Subsystems.current().geometryPrograms().requireIntercepted();
         if (Tracy.ENABLED) frameManager.noteStateApply();
         if (SystemProperties.SDL_VERIFY_STATE_SYNC && Thread.currentThread() == GLStateManager.getMainThread()) {
             StateSyncVerifier.verify(

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL43;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -223,6 +224,7 @@ public final class ShaderFrontend implements AutoCloseable {
     private static boolean supported(int type) {
         return type == GL20.GL_VERTEX_SHADER
                 || type == GL20.GL_FRAGMENT_SHADER
+                || type == GL32.GL_GEOMETRY_SHADER
                 || type == GL43.GL_COMPUTE_SHADER;
     }
 
@@ -230,6 +232,7 @@ public final class ShaderFrontend implements AutoCloseable {
         return switch (type) {
             case GL20.GL_VERTEX_SHADER -> GLSLANG_STAGE_VERTEX;
             case GL20.GL_FRAGMENT_SHADER -> GLSLANG_STAGE_FRAGMENT;
+            case GL32.GL_GEOMETRY_SHADER -> GLSLANG_STAGE_GEOMETRY;
             case GL43.GL_COMPUTE_SHADER -> GLSLANG_STAGE_COMPUTE;
             default -> throw new IllegalArgumentException("Unsupported shader stage: " + type);
         };

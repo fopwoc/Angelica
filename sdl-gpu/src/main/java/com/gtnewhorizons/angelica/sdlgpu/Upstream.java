@@ -202,7 +202,7 @@ public final class Upstream {
         return ownedBackend();
     }
 
-    static HostedBackend ownedBackend() {
+    public static HostedBackend ownedBackend() {
         context();
         return backend();
     }

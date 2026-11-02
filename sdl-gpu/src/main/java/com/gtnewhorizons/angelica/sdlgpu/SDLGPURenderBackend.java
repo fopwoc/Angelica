@@ -2527,7 +2527,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     }
 
     private record UniformEntry(String name, int glType, int arrayLen) {}
-    private final Int2ObjectOpenHashMap<List<UniformEntry>> uniformEntriesCache = new Int2ObjectOpenHashMap<>();
+    protected final Int2ObjectOpenHashMap<List<UniformEntry>> uniformEntriesCache = new Int2ObjectOpenHashMap<>();
 
     private List<UniformEntry> getOrBuildUniformEntries(int program) {
         final List<UniformEntry> cached = uniformEntriesCache.get(program);

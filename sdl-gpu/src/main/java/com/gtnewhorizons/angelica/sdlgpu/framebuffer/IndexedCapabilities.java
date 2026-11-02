@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_SCISSOR_TEST;
 
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
+import com.gtnewhorizons.angelica.sdlgpu.geometry.GeometryViewports;
 
 /** Validation shared by indexed-capability entry points and backend execution. */
 public final class IndexedCapabilities {
@@ -12,7 +13,7 @@ public final class IndexedCapabilities {
     public static void require(int capability, int index) {
         int limit = switch (capability) {
             case GL_BLEND -> ContextState.MAX_COLOR_ATTACHMENTS;
-            case GL_SCISSOR_TEST -> 1;
+            case GL_SCISSOR_TEST -> GeometryViewports.LIMIT;
             default -> throw new UnsupportedOperationException("Indexed capability not implemented: " + capability);
         };
         if (index < 0 || index >= limit)

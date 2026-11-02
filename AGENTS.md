@@ -127,6 +127,12 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `RenderBackend.namedFramebufferTextureLayer` (new, fails if unsupported): `GLSMFramebuffer` calls it directly;
   `FramebufferLayer` attaches the requested slice without temporary binding changes, including when validation fails.
 
+- Geometry execution: `ShaderManager.releaseProgramGpuResources` is public so owned geometry linking can replace
+  an executable; `SDLGPURenderBackend.uniformEntriesCache` is protected so owned linking invalidates public queries.
+  `ShaderManager.reflectStageImpl` uses owned `DefaultUniforms` to identify the default block after binding remapping.
+  `PipelineApplier.applyPipelineAndStateImpl` calls `GeometryPrograms.requireIntercepted` so unsupported geometry draw
+  entry points fail before an ordinary graphics pipeline can silently omit the stage.
+
 ## Deleted on `pz`
 
 - LWJGL2 `Display`/`Drawable` context model: `GLStateManager.makeCurrent`/`releaseContext`/`swapBuffers`/

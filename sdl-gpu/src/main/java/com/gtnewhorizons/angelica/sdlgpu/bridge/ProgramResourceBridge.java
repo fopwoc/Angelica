@@ -6,8 +6,8 @@ import com.gtnewhorizons.angelica.glsm.GLSMPrograms;
 import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ProgramResources;
-import com.gtnewhorizons.angelica.sdlgpu.shader.UniformResources;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ResourceOutput;
+import com.gtnewhorizons.angelica.sdlgpu.shader.UniformResources;
 import java.nio.IntBuffer;
 import java.util.Objects;
 import org.lwjgl.system.MemoryStack;
@@ -102,11 +102,13 @@ public final class ProgramResourceBridge {
     }
 
     private static UniformResources uniforms(int program) {
+        Subsystems.current().geometryPrograms().requireResourceQueries(program);
         var object = Upstream.shaders().getProgram(program);
         return Subsystems.current().linkedPrograms().of(object).uniforms(object);
     }
 
     private static ProgramResources resources(int program) {
+        Subsystems.current().geometryPrograms().requireResourceQueries(program);
         var object = Upstream.shaders().getProgram(program);
         return Subsystems.current().linkedPrograms().of(object).resources(object);
     }

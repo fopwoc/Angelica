@@ -1,15 +1,17 @@
 package com.gtnewhorizons.angelica.sdlgpu;
 
-import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.compat.ReportedState;
 import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
-import com.gtnewhorizons.angelica.sdlgpu.framebuffer.BlendEquations;
-import com.gtnewhorizons.angelica.sdlgpu.framebuffer.ColorMasks;
-import com.gtnewhorizons.angelica.sdlgpu.framebuffer.Framebuffers;
-import com.gtnewhorizons.angelica.sdlgpu.query.Queries;
 import com.gtnewhorizons.angelica.sdlgpu.extension.SdlBufferTextures;
 import com.gtnewhorizons.angelica.sdlgpu.extension.SdlOcclusionQueries;
 import com.gtnewhorizons.angelica.sdlgpu.extension.SdlTimestamps;
+import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.BlendEquations;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.ColorMasks;
+import com.gtnewhorizons.angelica.sdlgpu.framebuffer.Framebuffers;
+import com.gtnewhorizons.angelica.sdlgpu.geometry.GeometryPrograms;
+import com.gtnewhorizons.angelica.sdlgpu.geometry.GeometryViewports;
+import com.gtnewhorizons.angelica.sdlgpu.query.Queries;
 import com.gtnewhorizons.angelica.sdlgpu.shader.LinkedPrograms;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderPrograms;
 import com.gtnewhorizons.angelica.sdlgpu.sync.GpuSyncs;
@@ -29,6 +31,17 @@ import java.util.WeakHashMap;
  * other static entry points reach it through {@link #current()}, which also enforces the context-owning thread.
  */
 public final class Subsystems implements AutoCloseable {
+    private final GeometryPrograms geometryPrograms = new GeometryPrograms();
+    private final WeakHashMap<ContextState, GeometryViewports> geometryViewports = new WeakHashMap<>();
+
+    public GeometryPrograms geometryPrograms() {
+        return geometryPrograms;
+    }
+
+    public GeometryViewports geometryViewports() {
+        return geometryViewports.computeIfAbsent(Upstream.context(), ignored -> new GeometryViewports());
+    }
+
     private final ShaderPrograms shaderPrograms = new ShaderPrograms();
     private final LinkedPrograms linkedPrograms = new LinkedPrograms();
     private final Framebuffers framebuffers = new Framebuffers();
@@ -127,6 +140,7 @@ public final class Subsystems implements AutoCloseable {
     /** Native resources first, then shader bookkeeping; views last because they may still retain storage. */
     @Override
     public void close() {
+        geometryPrograms.close();
         drawTrace.close();
         queries.close();
         bufferTextures.close();

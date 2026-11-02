@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class ShaderFrontendTest {
     @Test
-    void rejectsGeometryBeforeItCanBeSilentlyDroppedFromAPipeline() {
+    void retainsGeometryForTheComputeExecutionPath() {
         try (var frontend = new ShaderFrontend()) {
             var geometry = frontend.compile(GL_GEOMETRY_SHADER, """
                     #version 460 core
@@ -23,8 +23,7 @@ class ShaderFrontendTest {
                         EndPrimitive();
                     }
                     """);
-            assertFalse(geometry.valid());
-            assertTrue(geometry.log().contains("shader stage not supported by SDL GPU"), geometry.log());
+            assertTrue(geometry.valid(), geometry.log());
             var vertex = frontend.compile(GL_VERTEX_SHADER, """
                     #version 460 core
                     void main() { gl_Position=vec4(0,0,0,1); }
@@ -36,10 +35,9 @@ class ShaderFrontendTest {
                     """);
             assertTrue(vertex.valid(), vertex.log());
             assertTrue(fragment.valid(), fragment.log());
-            var rejected = frontend.link(List.of(vertex, geometry, fragment));
-            assertFalse(rejected.valid());
-            assertTrue(rejected.stages().isEmpty());
-            // The application can still link a supported two-stage alternative after observing compile failure.
+            var linked = frontend.link(List.of(vertex, geometry, fragment));
+            assertTrue(linked.valid(), linked.log());
+            assertTrue(linked.stages().containsKey(GL_GEOMETRY_SHADER));
             assertTrue(frontend.link(List.of(vertex, fragment)).valid());
         }
     }

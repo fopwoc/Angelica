@@ -7,11 +7,11 @@ import static org.lwjgl.opengl.GL20.GL_BLEND_EQUATION_RGB;
 
 import com.gtnewhorizons.angelica.glsm.GLSMBlend;
 import com.gtnewhorizons.angelica.glsm.GLSMEnable;
+import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
+import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.IndexedCapabilities;
 import com.gtnewhorizons.angelica.sdlgpu.resource.FormatMap;
-import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
-import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 
 /** Indexed blend state enters GLSM's per-output path so subsequent global calls invalidate correctly. */
 public final class BlendBridge {
@@ -65,7 +65,9 @@ public final class BlendBridge {
     public static boolean glIsEnabledi(int capability, int index) {
         IndexedCapabilities.require(capability, index);
         var state = Upstream.context();
-        return capability == GL_BLEND ? state.pipeline.blendEnabledPerDrawBuffer[index] : state.scissorEnabled;
+        return capability == GL_BLEND
+                ? state.pipeline.blendEnabledPerDrawBuffer[index]
+                : Subsystems.current().geometryViewports().get(index).scissorEnabled();
     }
 
     /** One draw buffer's blend factors and equations, as GL enums; upstream stores them per output as SDL values. */

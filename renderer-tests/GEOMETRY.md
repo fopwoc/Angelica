@@ -1,42 +1,58 @@
 # GPU geometry emulation development
 
-The renderer's `sdlgpu.geometry` package is an experimental compute path. It is not connected to GL program
-linking or drawing yet. `ShaderFrontend` continues rejecting geometry stages, and the backend continues reporting
-geometry shaders as unsupported. Do not advertise support just because the source compiler accepts a fixture.
+The renderer's `sdlgpu.geometry` package connects GL geometry programs to compute emission, strip assembly and
+raster replay. `ShaderFrontend` validates the original vertex/geometry/fragment link before lowering it. Unsupported
+translation or draw paths fail explicitly; geometry is never silently removed. The backend still does not advertise
+complete geometry-shader support.
 
-Implemented components:
+## Execution
 
-- `GeometryCompute` converts a preprocessed geometry-stage body to compute. One job handles one input primitive
-  and one geometry invocation. Output records retain position, user values, viewport, layer, primitive ID and strip ID.
-- `GeometryLayout` and `GeometryField` describe std430 transport and bound all dispatch/allocation arithmetic.
-- `GeometryAssembly` expands emitted points, line strips or triangle strips into fixed per-job corner streams.
-  It preserves strip winding, uses last-vertex routing, marks unused corners invalid and leaves overflow flagged.
-- `GeometryRaster` generates a vertex stage reading those corner streams. Routing selects one logical viewport/layer
-  per raster pass. Primitive IDs are exposed through a flat user varying for a later fragment-stage adaptation.
+- `GeometryVertex` lowers a pure vertex stage to GPU buffer fetching and namespaces its globals, helpers and uniforms.
+  `GeometryBuffers` uploads VAO descriptors; vertex and index payload stays in the application's GPU buffers.
+- `GeometryCompute` evaluates one input primitive and geometry invocation per compute job. Records retain position,
+  user values, viewport, layer, primitive ID and strip ID. The first executor recomputes the pure vertex stage per
+  geometry invocation; stages with side effects or pre-raster texture resources are rejected.
+- `GeometryAssembly` expands strips into fixed per-job corner streams, preserving winding and last-vertex routing.
+- `GeometryRaster` reads emitted records and corners. Flat user values come from the last emitted vertex for every
+  corner of a primitive, independent of the native raster API's provoking-vertex convention. Internal raster controls
+  use a GPU storage buffer, separate from fragment default uniforms.
+- `GeometryUniforms` merges public default uniforms from the original stages. Internal program names, buffers and
+  transport uniforms remain private. Relinks reset uniform values and query caches; deleting a current program keeps
+  its executable alive until it is unbound.
+- `GeometryDrawState` restores the program, VAO, indexed storage/uniform bindings and physical viewport/scissor/depth
+  state after internal passes, including on a GPU validation failure.
 
-Initial limits are deliberate: scalar/vector/float-matrix interfaces, unsized primitive input arrays, at most 32
-invocations and 1024 emitted vertices per invocation, and one output stream. Interface blocks, explicit interface
-layouts, precision/invariance qualifiers, clip/cull distances and point size need additional transport support and
-are rejected. Internal transport bindings must not alias shader resources.
+The executor reads completion/error flags synchronously before rasterization and throws on output overflow or an
+out-of-range vertex fetch. It reallocates transport buffers and replays logical viewports separately. This is an
+initial correctness path, not a performance claim.
 
-CPU checks compile generated compute stages to SPIR-V, cross-compile to Metal, compile raster stages, and validate
-layouts, overflow arithmetic and rejection paths. They create no device or window.
+## Wired subset
 
-Julia's development probe has a focused `--geometry <output-directory>` command. It opens an offscreen backend and
-checks actual GPU emission and assembly, including two input triangles, six invocations, multiple strip boundaries,
-routing, raster replay with exact varying values, rejection of unmatched viewport/layer routes, and bounded output overflow. It requires an explicit user request, just like every other native probe.
-It does not launch PZ. The focused probe has passed on Metal for this subset, including real buffer readbacks and an
-offscreen pixel oracle. This is not evidence that GL geometry programs work in the game yet.
+- Vertex + geometry + fragment programs, `GL_TRIANGLES` input and triangle-strip output.
+- `glDrawArrays`, `glDrawElements` and base-vertex indexed draws; instanced entry points only with one instance.
+- Up to four word-sized GPU vertex/index streams; scalar/vector/float-matrix attributes, disabled generic attributes,
+  byte/short/int/float/half formats, normalization and byte/short/int indices. Client-memory arrays are rejected.
+- Default uniforms including matrix arrays and values shared across stages, plus ordinary fragment samplers.
+- Sixteen logical integer-pixel viewports, with indexed scissor enable/rectangle and depth-range state. Global setters
+  broadcast to every viewport as defined by GL. Geometry layer writes are rejected until layered output is wired.
+- Scalar/vector/float-matrix varyings with smooth, noperspective or flat interpolation, and fragment primitive IDs.
+- Bounds of 32 geometry invocations, 1024 emitted vertices per invocation and 64 MiB per transport buffer.
 
-The current raster executor must explicitly associate the generated control uniform block with its buffer binding
-through `glUniformBlockBinding`. The probe does this through the normal GL API. Do not rely on the backend's current
-single-block graphics path to initialize this association from GLSL `layout(binding=...)` alone.
+Application uniform/storage blocks, pre-raster samplers/images/atomics, true instancing, primitive restart, indirect
+and multi-draw entry points, geometry program-interface queries, multiple output streams, interface blocks, explicit
+varying layouts, precision/invariance qualifiers, clip/cull distances and point size are not wired. They fail rather
+than using a partial rendering fallback. The component generators handle more topologies than the GL draw executor;
+that does not imply those topologies can be used through GL yet.
 
-Remaining before activation:
+## Validation
 
-1. Validate emission, assembly and raster replay on the actual backend; fail on GPU overflow, never silently discard it.
-2. Produce primitive input records from GPU vertex fetching, including indices, base vertices and instancing.
-3. Manage internal programs, uniforms/resources, transient buffers and original GL state across all affected draw paths.
-4. Implement logical viewport/layer state and raster passes, including scissor/depth state and provoking-vertex policy.
-5. Preserve fragment-stage interfaces/primitive IDs and introspection, and validate lifecycle/relink/delete behavior.
-6. Run offscreen rendering regressions, then manually test the game. Advertise only the validated subset.
+CPU tests compile generated compute/raster stages, cross-compile to Metal, and check transport arithmetic, parser
+rejections, attribute locations, uniform merging, default-block reflection after binding remapping, and indexed state.
+They create no device or window.
+
+Julia's explicitly requested `--geometry <output-directory>` probe checks GPU emission, six invocations, multiple
+strips, routing, bounded overflow and real raster pixels. Its GL integration case links an original three-stage
+program, fetches indexed/normalized/disabled vertex attributes on the GPU, uploads shared uniforms and a matrix array,
+checks six viewports and flat varyings, then checks state restoration, out-of-range fetch rejection, relinking and
+current-program deletion. It opens no game or native window. Metal validation does not establish Vulkan behavior or
+PZ/pz3d gameplay readiness; those require separate tests.
