@@ -6,16 +6,17 @@ import static org.lwjgl.opengl.GL43.*;
 import static org.lwjgl.sdl.SDLGPU.*;
 
 import com.gtnewhorizons.angelica.sdlgpu.SDLGPUGate;
-import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
-import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager.ProgramObject;
-import com.gtnewhorizons.angelica.sdlgpu.util.Sdl;
 import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
+import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
+import com.gtnewhorizons.angelica.sdlgpu.resource.ResourceManager;
 import com.gtnewhorizons.angelica.sdlgpu.shader.LinkedPrograms;
-import com.gtnewhorizons.angelica.sdlgpu.texture.SamplerFallbacks;
+import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager.ProgramObject;
 import com.gtnewhorizons.angelica.sdlgpu.texture.SamplerLayout;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureBindings;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureTable;
+import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
+import com.gtnewhorizons.angelica.sdlgpu.util.Sdl;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -29,12 +30,12 @@ import org.lwjgl.system.MemoryUtil;
 
 /** GL buffer-texture attachments own views, not copies; replacement follows the buffer object's current store. */
 public final class BufferTextures implements AutoCloseable {
-    /** Reserved names below every GL name; one 16-byte texel of the sampler's scalar type. */
+    /** One private 16-byte texel per scalar type, outside the GL object-name namespace. */
     private enum Placeholder {
         FLOAT(GL_SAMPLER_BUFFER, BufferTextureFormat.RGBA32F),
         INT(GL_INT_SAMPLER_BUFFER, BufferTextureFormat.RGBA32I),
         UNSIGNED(GL_UNSIGNED_INT_SAMPLER_BUFFER, BufferTextureFormat.RGBA32UI);
-        final int type, name = -2 - ordinal();
+        final int type;
         final BufferTextureFormat format;
 
         Placeholder(int type, BufferTextureFormat format) {
@@ -48,11 +49,6 @@ public final class BufferTextures implements AutoCloseable {
         static Placeholder of(int type) {
             for (var placeholder : ALL) if (placeholder.type == type) return placeholder;
             throw new IllegalArgumentException("Not a buffer sampler type: 0x" + Integer.toHexString(type));
-        }
-
-        static Placeholder named(int name) {
-            int index = -2 - name;
-            return index >= 0 && index < ALL.length ? ALL[index] : null;
         }
     }
 
@@ -130,7 +126,6 @@ public final class BufferTextures implements AutoCloseable {
     }
 
     public void bindTexture(int unit, int name) {
-        if (name < 0) throw new IllegalArgumentException("Negative buffer texture name");
         if (name != 0) {
             var texture = textures.getOrCreate(name);
             if (texture.target() != 0)
@@ -154,7 +149,7 @@ public final class BufferTextures implements AutoCloseable {
     }
 
     public boolean contains(int name) {
-        return view(name) != null || Placeholder.named(name) != null;
+        return view(name) != null;
     }
 
     public void attach(int name, int format, int buffer, long offset, long size, boolean whole) {
@@ -256,7 +251,7 @@ public final class BufferTextures implements AutoCloseable {
         var layout = layout(program);
         if (!layout.bufferUnit(program, unit) || layout.hasOrdinaryTarget(program, unit))
             return bindings.get(state, unit, layout.ordinaryTarget(program, unit));
-        return bufferBinding(unit, layout.bufferType(program, unit));
+        return bound[unit];
     }
 
     /** Binding for one backend sampler slot, read from its unit's binding for the slot's own target. */
@@ -266,39 +261,52 @@ public final class BufferTextures implements AutoCloseable {
         var layout = layout(program);
         int target = layout.slotTarget(program, slot, fragment);
         if (target == 0) return samplerBinding(state, unit);
-        if (target == GL_TEXTURE_BUFFER) return bufferBinding(unit, layout.slotBufferType(program, slot, fragment));
-        return ordinaryBinding(
-                state,
-                unit,
-                target,
-                layout.slotScalar(program, slot, fragment),
-                layout.slotShadow(program, slot, fragment));
+        return target == GL_TEXTURE_BUFFER ? bound[unit] : bindings.get(state, unit, target);
     }
 
     public int computeSamplerBinding(ContextState state, int unit, String name) {
         var program = state.boundProgramObj;
         if (program == null || !program.linked || bindings.samplerOverride(state)) return samplerBinding(state, unit);
+        int target = layout(program).target(name);
+        return target == GL_TEXTURE_BUFFER ? bound[unit] : bindings.get(state, unit, target);
+    }
+
+    public long samplerHandle(ResourceManager resources, ContextState state, int slot, boolean fragment, int name) {
+        if (name != 0) return TextureViewHooks.samplingHandle(resources, name);
+        var program = state.boundProgramObj;
+        if (program == null || !program.linked) return 0;
         var layout = layout(program);
-        int target = layout.target(name);
+        int target = layout.slotTarget(program, slot, fragment);
+        if (target == 0) return 0;
         return target == GL_TEXTURE_BUFFER
-                ? bufferBinding(unit, layout.bufferType(name))
-                : ordinaryBinding(state, unit, target, layout.scalar(name), layout.shadow(name));
+                ? placeholder(Placeholder.of(layout.slotBufferType(program, slot, fragment)))
+                : Subsystems.current()
+                        .samplerFallbacks()
+                        .handle(
+                                target,
+                                layout.slotScalar(program, slot, fragment),
+                                layout.slotShadow(program, slot, fragment));
     }
 
-    private int ordinaryBinding(ContextState state, int unit, int target, int scalar, boolean shadow) {
-        int name = bindings.get(state, unit, target);
-        return name == 0 ? SamplerFallbacks.name(target, scalar, shadow) : name;
-    }
-
-    // GL reads an unbound buffer texture without failing, so typed placeholders stand in for the missing view.
-    private int bufferBinding(int unit, int type) {
-        int name = bound[unit];
-        return name != 0 ? name : Placeholder.of(type).name;
+    public long computeSamplerHandle(
+            ResourceManager resources, ContextState state, int unit, String uniform, int name) {
+        if (name != 0) return TextureViewHooks.samplingHandle(resources, name);
+        var program = state.boundProgramObj;
+        if (program == null || !program.linked) return 0;
+        var layout = layout(program);
+        if (uniform == null)
+            return layout.bufferUnit(program, unit) && !layout.hasOrdinaryTarget(program, unit)
+                    ? placeholder(Placeholder.of(layout.bufferType(program, unit)))
+                    : 0;
+        int target = layout.target(uniform);
+        return target == GL_TEXTURE_BUFFER
+                ? placeholder(Placeholder.of(layout.bufferType(uniform)))
+                : Subsystems.current()
+                        .samplerFallbacks()
+                        .handle(target, layout.scalar(uniform), layout.shadow(uniform));
     }
 
     public long samplingHandle(int name) {
-        var placeholder = Placeholder.named(name);
-        if (placeholder != null) return placeholder(placeholder);
         var view = view(name);
         if (view == null) throw new IllegalArgumentException("Unknown buffer texture");
         if (view.buffer == 0) throw new IllegalStateException("Buffer texture has no attached storage");

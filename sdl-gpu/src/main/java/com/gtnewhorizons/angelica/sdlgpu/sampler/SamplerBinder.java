@@ -152,7 +152,7 @@ public final class SamplerBinder {
             }
             final int glUnit = samplerUnits[i];
             final int glTexId = BufferTextureHooks.samplerBinding(st, glUnit, i, fragment);
-            long texHandle = (glTexId != 0) ? TextureViewHooks.samplingHandle(resourceManager, glTexId) : 0;
+            long texHandle = BufferTextureHooks.samplerHandle(resourceManager, st, glUnit, i, fragment, glTexId);
             if (texHandle == 0) {
                 texHandle = fallbackTexture;
                 if (loggedFallbackSubs.add(((long) st.boundProgram << 32) | (glUnit & 0xFFFFFFFFL))) {

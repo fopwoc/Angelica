@@ -133,6 +133,10 @@ Keep this list current. One line per hook: file, what it calls, and why.
   `PipelineApplier.applyPipelineAndStateImpl` calls `GeometryPrograms.requireIntercepted` so unsupported geometry draw
   entry points fail before an ordinary graphics pipeline can silently omit the stage.
 
+- `TextureInfoCache`: treats Java `int` object names as unsigned GL bit patterns when recording uploads and deletions.
+- `SamplerBinder` and `ComputeBinder`: typed incomplete-sampler handles come directly from `BufferTextureHooks`;
+  internal fallback textures never borrow names from the GL object namespace.
+
 - `PixelOps.applyUnpackPixelStore`: owned `PixelUnpack.requireSource` validates the full client span before any
   unpack allocation/read and includes buffer bounds, dimensions and pixel-store settings in failures.
   Owned `PixelUnpack.isTightlyPacked` keeps default row padding on the conversion path;

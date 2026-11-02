@@ -17,7 +17,6 @@ import org.lwjgl.system.MemoryUtil;
 
 /** Incomplete GL samplers read black with alpha one; native descriptors still need the declared image dimension. */
 public final class SamplerFallbacks implements AutoCloseable {
-    private static final int FIRST = -16;
     private static final int[] TYPES = {
         SDL_GPU_TEXTURETYPE_2D,
         SDL_GPU_TEXTURETYPE_3D,
@@ -33,7 +32,7 @@ public final class SamplerFallbacks implements AutoCloseable {
     };
     private final long[] textures = new long[TYPES.length * FORMATS.length];
 
-    public static int name(int target, int scalar, boolean shadow) {
+    private static int index(int target, int scalar, boolean shadow) {
         int shape = switch (target) {
             case GL_TEXTURE_2D -> 0;
             case GL_TEXTURE_3D -> 1;
@@ -52,16 +51,11 @@ public final class SamplerFallbacks implements AutoCloseable {
             if (kind != 0 || target == GL_TEXTURE_3D) throw new IllegalArgumentException("Invalid shadow sampler type");
             kind = 3;
         }
-        return FIRST - shape * FORMATS.length - kind;
+        return shape * FORMATS.length + kind;
     }
 
-    public static boolean contains(int name) {
-        return name <= FIRST && name > FIRST - TYPES.length * FORMATS.length;
-    }
-
-    public long handle(int name) {
-        if (!contains(name)) throw new IllegalArgumentException("Unknown sampler placeholder: " + name);
-        int index = FIRST - name;
+    public long handle(int target, int scalar, boolean shadow) {
+        int index = index(target, scalar, shadow);
         if (textures[index] == 0) textures[index] = create(index / FORMATS.length, index % FORMATS.length);
         return textures[index];
     }

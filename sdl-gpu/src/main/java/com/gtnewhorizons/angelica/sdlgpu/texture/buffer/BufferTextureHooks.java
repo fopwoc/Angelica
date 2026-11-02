@@ -33,6 +33,17 @@ public final class BufferTextureHooks {
         return TextureViewHooks.samplingHandle(resources, name);
     }
 
+    public static long samplerHandle(
+            ResourceManager resources, ContextState state, int unit, int slot, boolean fragment, int name) {
+        return Subsystems.current().bufferTextures().samplerHandle(resources, state, slot, fragment, name);
+    }
+
+    public static long computeSamplerHandle(
+            ResourceManager resources, ContextState state, int unit, int slot, String[] names, int name) {
+        String uniform = names != null && slot < names.length ? names[slot] : null;
+        return Subsystems.current().bufferTextures().computeSamplerHandle(resources, state, unit, uniform, name);
+    }
+
     public static boolean retire(ResourceManager resources, long handle) {
         if (!Subsystems.current().bufferTextures().retains(handle)) return false;
         resources.releaseBufferHandle(handle);

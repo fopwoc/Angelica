@@ -17,7 +17,23 @@ class TextureTableTest {
         assertSame(small, table.getOrCreate(3));
         assertNull(table.get(4));
         assertNull(table.get(-2));
-        assertThrows(IllegalArgumentException.class, () -> table.getOrCreate(-2));
+    }
+
+    @Test
+    void highBitNamesKeepTheirIdentityAndDeletionDoesNotTouchOtherNames() {
+        var table = new TextureTable();
+        for (int name : new int[] {-1, -2, -3, -4, -16, -35, Integer.MIN_VALUE}) {
+            var record = table.getOrCreate(name);
+            assertSame(record, table.get(name));
+            assertSame(record, table.getOrCreate(name));
+            assertNotSame(table.getOrCreate(name & Integer.MAX_VALUE), record);
+            table.deleted(name);
+            assertNull(table.get(name));
+            assertNotSame(record, table.getOrCreate(name));
+        }
+        table.clear();
+        assertNull(table.get(-1));
+        assertNull(table.get(Integer.MIN_VALUE));
     }
 
     @Test

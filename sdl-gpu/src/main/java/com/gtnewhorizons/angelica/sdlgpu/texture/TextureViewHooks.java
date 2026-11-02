@@ -4,7 +4,6 @@ import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.resource.ResourceManager;
-import com.gtnewhorizons.angelica.sdlgpu.texture.SamplerFallbacks;
 
 /** Texture views, buffer textures and sampler fallbacks at the upstream texture lifecycle and sampling points. */
 public final class TextureViewHooks {
@@ -30,8 +29,6 @@ public final class TextureViewHooks {
 
     public static long samplingHandle(ResourceManager resources, int name) {
         var subsystems = Subsystems.current();
-        if (SamplerFallbacks.contains(name))
-            return subsystems.samplerFallbacks().handle(name);
         var buffers = subsystems.bufferTextures();
         return buffers.contains(name)
                 ? buffers.samplingHandle(name)

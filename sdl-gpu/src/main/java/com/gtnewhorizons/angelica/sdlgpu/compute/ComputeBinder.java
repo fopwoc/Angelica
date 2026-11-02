@@ -381,7 +381,7 @@ public final class ComputeBinder implements ComputeDispatchSink {
         for (int i = 0; i < units.length; i++) {
             final int unit = resolveUnit(prog.samplerTextureUnits, names, i, units[i]);
             final int texGlId = BufferTextureHooks.computeSamplerBinding(st, unit, i, names);
-            long texHandle = texGlId != 0 ? BufferTextureHooks.samplingHandle(resourceManager, texGlId) : 0;
+            long texHandle = BufferTextureHooks.computeSamplerHandle(resourceManager, st, unit, i, names, texGlId);
             if (texHandle == 0) {
                 texHandle = resourceManager.getOrCreateFallbackTexture();
                 if (texHandle == 0) { warnMissingBinding(st, 2, "sampler texture unit", unit, true); return false; }

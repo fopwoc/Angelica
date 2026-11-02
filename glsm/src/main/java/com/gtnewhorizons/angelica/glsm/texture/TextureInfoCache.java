@@ -47,13 +47,13 @@ public class TextureInfoCache {
     }
 
     public void onContentsChanged(int texture) {
-        if (texture <= 0) return;
+        if (texture == 0) return;
         final TextureInfo info = getInfo(texture);
         if (info != null) info.bumpUploadGeneration();
     }
 
     public void onWrittenOutsideUploads(int texture) {
-        if (texture <= 0) return;
+        if (texture == 0) return;
         final TextureInfo info = getInfo(texture);
         if (info == null || info.writtenOutsideUploads) return;
         info.writtenOutsideUploads = true;
@@ -72,8 +72,6 @@ public class TextureInfoCache {
     }
 
     public TextureInfo getInfo(int id) {
-        if (id < 0) return null;
-
         if (GLStateManager.isSplashComplete()) {
             return cache.computeIfAbsent(id, TextureInfo::new);
         }
@@ -148,7 +146,6 @@ public class TextureInfoCache {
     }
 
     public void onDeleteTexture(int id) {
-        if (id < 0) return;
         deleteCount++;
 
         if (GLStateManager.isSplashComplete()) {

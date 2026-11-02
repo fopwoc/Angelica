@@ -53,15 +53,14 @@ public final class TextureTable {
     /** The record for {@code name}, or {@code null} when Julia holds no state for it. */
     public Texture get(int name) {
         if (name >= 0 && name < dense.length) return dense[name];
-        return name < 0 ? null : sparse.get(name);
+        return sparse.get(name);
     }
 
     public Texture getOrCreate(int name) {
-        if (name < 0) throw new IllegalArgumentException("Negative texture name: " + name);
         var texture = get(name);
         if (texture != null) return texture;
         texture = new Texture();
-        if (name < DENSE_LIMIT) {
+        if (name >= 0 && name < DENSE_LIMIT) {
             if (name >= dense.length)
                 dense = Arrays.copyOf(dense, Math.min(DENSE_LIMIT, Math.max(name + 1, dense.length * 2)));
             dense[name] = texture;
@@ -71,8 +70,7 @@ public final class TextureTable {
 
     /** Called last when a name is deleted, after every subsystem has read its final state. */
     public void deleted(int name) {
-        if (name < 0) return;
-        if (name < dense.length) dense[name] = null;
+        if (name >= 0 && name < dense.length) dense[name] = null;
         else sparse.remove(name);
     }
 
