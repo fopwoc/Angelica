@@ -24,8 +24,13 @@ layouts, overflow arithmetic and rejection paths. They create no device or windo
 
 Julia's development probe has a focused `--geometry <output-directory>` command. It opens an offscreen backend and
 checks actual GPU emission and assembly, including two input triangles, six invocations, multiple strip boundaries,
-routing and bounded output overflow. It requires an explicit user request, just like every other native probe.
-It does not launch PZ. Until it passes, generated kernels have compilation evidence only, not GPU execution evidence.
+routing, raster replay with exact varying values, rejection of unmatched viewport/layer routes, and bounded output overflow. It requires an explicit user request, just like every other native probe.
+It does not launch PZ. The focused probe has passed on Metal for this subset, including real buffer readbacks and an
+offscreen pixel oracle. This is not evidence that GL geometry programs work in the game yet.
+
+The current raster executor must explicitly associate the generated control uniform block with its buffer binding
+through `glUniformBlockBinding`. The probe does this through the normal GL API. Do not rely on the backend's current
+single-block graphics path to initialize this association from GLSL `layout(binding=...)` alone.
 
 Remaining before activation:
 
