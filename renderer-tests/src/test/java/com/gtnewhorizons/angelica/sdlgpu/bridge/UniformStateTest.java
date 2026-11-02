@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
 import com.gtnewhorizons.angelica.sdlgpu.shader.UniformStaging;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.util.spvc.Spvc;
 
@@ -65,12 +66,23 @@ class UniformStateTest {
     }
 
     @Test
-    void doesNotReturnStagedNumericValuesForAnExternalUniformBuffer() {
-        var program = program(1, 1, 0);
+    void readsDefaultMatrixUniformWithoutTreatingANamedBlockBindingAsItsStorage() {
+        var program = program(4, 4, 0);
+        program.locationToName.put(0, "actorShadowProjection");
+        program.externalUboBinding = 7;
+        assertArrayEquals(
+                new float[16], UniformState.read(program, staging(null), 0).raw());
+        float[] matrix = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        var values = staging(matrix);
+        float[] result = new float[17];
+        result[16] = 99;
+        UniformState.read(program, values, 0).write(result);
+        assertArrayEquals(matrix, Arrays.copyOf(result, 16));
+        assertEquals(99, result[16]);
         program.externalUboBinding = 3;
-        var failure = assertThrows(
-                UnsupportedOperationException.class, () -> UniformState.read(program, staging(new float[] {123}), 0));
-        assertTrue(failure.getMessage().contains("value (binding 3)"));
+        assertArrayEquals(matrix, UniformState.read(program, values, 0).raw());
+        assertEquals(3, program.externalUboBinding);
+        assertThrows(IllegalArgumentException.class, () -> UniformState.read(program, values, -1));
     }
 
     private static ShaderManager.ProgramObject program(int vector, int columns, int arrayLength) {
