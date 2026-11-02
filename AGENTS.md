@@ -135,6 +135,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
 
 - `PixelOps.applyUnpackPixelStore`: owned `PixelUnpack.requireSource` validates the full client span before any
   unpack allocation/read and includes buffer bounds, dimensions and pixel-store settings in failures.
+  Owned `PixelUnpack.isTightlyPacked` keeps default row padding on the conversion path;
+  `SDLGPURenderBackend` uses `PixelUnpack.bufferView` for checked 2D pixel-buffer spans including padding/skips.
 
 ## Deleted on `pz`
 

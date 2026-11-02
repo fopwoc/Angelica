@@ -13,6 +13,7 @@ import static org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING;
 import static org.lwjgl.opengl.GL43.GL_DEPTH_STENCIL_TEXTURE_MODE;
 
 import com.gtnewhorizons.angelica.glsm.GLSMTextures;
+import com.gtnewhorizons.angelica.glsm.texture.TextureInfoCache;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
 import com.gtnewhorizons.angelica.sdlgpu.texture.ClientPixels;
@@ -168,6 +169,8 @@ public abstract class TextureLayer extends FramebufferLayer {
             int pixelFormat,
             int type,
             ByteBuffer data) {
+        if (!TextureInfoCache.isProxyTarget(target))
+            data = ClientPixels.nativeView(data, width, height, pixelFormat, type, Upstream.context().pixelStore);
         int storageFormat = format == GL_RED && type == GL_UNSIGNED_BYTE ? GL_R8 : format;
         if (data == null
                 && target == GL_TEXTURE_2D
@@ -209,6 +212,21 @@ public abstract class TextureLayer extends FramebufferLayer {
         try (var client = ClientPixels.borrow(pixels, width, height, pixelFormat, type, state.pixelStore)) {
             texImage2D(target, level, format, width, height, border, client.format(), type, client.data());
         }
+    }
+
+    @Override
+    public void texSubImage2D(
+            int target, int level, int x, int y, int width, int height, int format, int type, ByteBuffer data) {
+        super.texSubImage2D(
+                target,
+                level,
+                x,
+                y,
+                width,
+                height,
+                format,
+                type,
+                ClientPixels.nativeView(data, width, height, format, type, Upstream.context().pixelStore));
     }
 
     @Override

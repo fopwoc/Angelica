@@ -309,10 +309,11 @@ public final class PixelOps {
     }
 
     public static ByteBuffer applyUnpackPixelStore(ByteBuffer src, int width, int height, int format, int type, ContextState.PixelStoreState ps) {
-        if (src == null || ps == null || ps.isDefault()) return src;
+        if (src == null || ps == null) return src;
         final int pixelBytes = glPixelSize(format, type);
         if (pixelBytes <= 0) return src;
         com.gtnewhorizons.angelica.sdlgpu.texture.PixelUnpack.requireSource(src, width, height, format, type, ps);
+        if (com.gtnewhorizons.angelica.sdlgpu.texture.PixelUnpack.isTightlyPacked(width, height, pixelBytes, ps)) return src;
         final int srcStride = alignedRowStride(ps.unpackRowLength > 0 ? ps.unpackRowLength : width, pixelBytes, ps.unpackAlignment);
         final int dstStride = width * pixelBytes;
         final int totalDst = dstStride * height;

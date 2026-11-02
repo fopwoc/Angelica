@@ -1614,13 +1614,10 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (st.boundPixelUnpackBuffer == 0) return;
         final ByteBuffer staging = resourceManager.getPboStaging(st.boundPixelUnpackBuffer);
         if (staging == null) return;
-        final int offset = (int) pixelBufferOffset;
-        final int dataLen = width * height * PixelOps.glPixelSize(format, type);
-        if (offset + dataLen > staging.capacity()) return;
-        staging.position(offset).limit(offset + dataLen);
+        final ByteBuffer pixels = com.gtnewhorizons.angelica.sdlgpu.texture.PixelUnpack.bufferView(staging, pixelBufferOffset, width, height, format, type, st.pixelStore);
         textureOps.uploadTextureRegion(st, glId, resourceManager.getTextureMeta(glId),
             resourceManager.getTextureHandle(glId),
-            staging.slice(), 0, 0, width, height, level, format, type);
+            pixels, 0, 0, width, height, level, format, type);
     }
 
     @Override public void texSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, ByteBuffer pixels) {
@@ -1639,13 +1636,10 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (glId == 0) return;
         final ByteBuffer staging = resourceManager.getPboStaging(st.boundPixelUnpackBuffer);
         if (staging == null) return;
-        final int offset = (int) pboOffset;
-        final int dataLen = width * height * PixelOps.glPixelSize(format, type);
-        if (offset + dataLen > staging.capacity()) return;
-        staging.position(offset).limit(offset + dataLen);
+        final ByteBuffer pixels = com.gtnewhorizons.angelica.sdlgpu.texture.PixelUnpack.bufferView(staging, pboOffset, width, height, format, type, st.pixelStore);
         textureOps.uploadTextureRegion(st, glId, resourceManager.getTextureMeta(glId),
             resourceManager.getTextureHandle(glId),
-            staging.slice(), xoffset, yoffset, width, height, level, format, type);
+            pixels, xoffset, yoffset, width, height, level, format, type);
     }
     @Override public TextureStaging beginTextureStaging(int level, int x, int y, int width, int height) {
         final int glId = boundTextureFor(s(), GL11.GL_TEXTURE_2D);

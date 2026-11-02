@@ -10,6 +10,32 @@ import org.lwjgl.system.MemoryUtil;
 
 class PixelUnpackTest {
     @Test
+    void boundsPixelBufferViewsUsingPaddedRowsWithoutChangingStaging() {
+        var state = new PixelStoreState();
+        var data = MemoryUtil.memAlloc(9);
+        for (int i = 0; i < 9; i++) data.put(i, (byte) i);
+        data.position(1).limit(1);
+        try {
+            var view = PixelUnpack.bufferView(data, 2L, 3, 2, GL_RED, GL_UNSIGNED_BYTE, state);
+            assertEquals(7, view.remaining());
+            var packed = PixelOps.applyUnpackPixelStore(view, 3, 2, GL_RED, GL_UNSIGNED_BYTE, state);
+            try {
+                for (int i = 0; i < 6; i++) assertEquals((byte) (2 + i + (i >= 3 ? 1 : 0)), packed.get(i));
+            } finally {
+                MemoryUtil.memFree(packed);
+            }
+            assertEquals(1, data.position());
+            assertEquals(1, data.limit());
+            for (long offset : new long[] {-1, 3, 1L << 32})
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> PixelUnpack.bufferView(data, offset, 3, 2, GL_RED, GL_UNSIGNED_BYTE, state));
+        } finally {
+            MemoryUtil.memFree(data);
+        }
+    }
+
+    @Test
     void rejectsShortUnpackSourcesBeforeAllocationAndExplainsTheFullAddressingState() {
         var state = new PixelStoreState();
         state.unpackRowLength = 4;

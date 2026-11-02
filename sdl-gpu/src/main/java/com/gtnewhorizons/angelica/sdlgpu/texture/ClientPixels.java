@@ -31,7 +31,6 @@ public final class ClientPixels implements AutoCloseable {
         int pixelBytes = PixelOps.glPixelSize(format, type);
         int span = requiredBytes(width, height, pixelBytes, store);
         var source = MemoryUtil.memByteBuffer(address, span);
-        int rowBytes = Math.multiplyExact(width, pixelBytes);
         int stride = Math.toIntExact(rowStride(width, pixelBytes, store));
         if ((format == GL_RGB || format == GL_BGR) && type == GL_UNSIGNED_BYTE) {
             var expanded = MemoryUtil.memAlloc(requiredBytes(width, height, 4, store));
@@ -49,16 +48,20 @@ public final class ClientPixels implements AutoCloseable {
                 }
             return new ClientPixels(expanded, true, GL_RGBA);
         }
-        // Upstream skips unpack conversion in the default state. Other narrow pixel formats
-        // can still contain row padding, so make that case tight before its byte-buffer path.
-        if (store.isDefault() && stride != rowBytes && width > 0 && height > 0) {
-            var packed = MemoryUtil.memAlloc(Math.multiplyExact(rowBytes, height));
-            for (int y = 0; y < height; y++)
-                MemoryUtil.memCopy(
-                        address + (long) y * stride, MemoryUtil.memAddress(packed) + (long) y * rowBytes, rowBytes);
-            return new ClientPixels(packed, true, format);
-        }
         return new ClientPixels(source, false, format);
+    }
+
+    /** Native GL sees an address and transfer span, not a direct buffer's Java limit. */
+    public static ByteBuffer nativeView(
+            ByteBuffer source, int width, int height, int format, int type, PixelStoreState store) {
+        if (source == null || !source.isDirect()) return source;
+        int span = requiredBytes(width, height, PixelOps.glPixelSize(format, type), store);
+        var view = source.duplicate().order(source.order());
+        view.limit(source.capacity());
+        PixelUnpack.requireSource(view, width, height, format, type, store);
+        int end = Math.addExact(source.position(), span);
+        if (source.limit() == end) return source;
+        return view.limit(end);
     }
 
     static int requiredBytes(int width, int height, int pixelBytes, PixelStoreState store) {
