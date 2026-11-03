@@ -35,6 +35,8 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
   even after its CPU snapshot quota is exhausted.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
+- `shader.ProgramLinkState` restores image layout bindings through owned `ImageBindings`, using the GL units saved
+  before backend slot remapping. Moved samplers retain their separate sampler-unit assignments.
 - `sdlgpu.extension` binds the native SDL extensions built from `sdl-gpu/native`.
 - `sdlgpu.compat.GlDispatch` releases fabricated GL capabilities/provider state when the host closes its runtime.
 - `glsm.redirect.lwjgl3.Lwjgl3Redirects` owns generic GL routing after the base redirector. `RendererEndpoint` names
@@ -150,6 +152,9 @@ Keep this list current. One line per hook: file, what it calls, and why.
   promoting its physical allocation to RGBA of the same precision.
 - `PixelOps.prepareUploadBuffer`: `ColorUploads.prepare` converts scalar color types and missing channels into the
   physical storage layout; named uploads share the same conversion code.
+- `GlslVulkanPreprocess.separateTextureTypeForImage`: owned `ReadOnlyImages` preserves float, signed and unsigned
+  scalar types when readonly image loads become samplerless texture fetches. `ShaderManager` uses versioned image
+  translation cache keys, including the source-transform cache, so stale integer rewrites are not reused.
 
 - `PixelOps.applyUnpackPixelStore`: owned `PixelUnpack.requireSource` validates the full client span before any
   unpack allocation/read and includes buffer bounds, dimensions and pixel-store settings in failures.

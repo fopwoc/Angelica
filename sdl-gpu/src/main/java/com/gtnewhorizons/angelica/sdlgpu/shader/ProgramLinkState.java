@@ -1,7 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.shader;
 
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
-import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
 import java.util.Arrays;
 
 /** Uniform locations, values and resource assignments belong to one linked executable. */
@@ -27,6 +26,7 @@ public final class ProgramLinkState {
     }
 
     public static void linked(ShaderManager.ProgramObject program, ContextState state) {
+        ImageBindings.initialize(program);
         for (int location = 0; location < program.uniformSlotCount; location++)
             if (program.locationKind[location] == ShaderManager.ProgramObject.LOCATION_KIND_SAMPLER)
                 program.locationSamplerUnit[location] = 0;

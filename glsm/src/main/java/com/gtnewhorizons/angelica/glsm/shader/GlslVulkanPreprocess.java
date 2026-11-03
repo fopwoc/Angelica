@@ -292,14 +292,7 @@ public final class GlslVulkanPreprocess {
     }
 
     private static @Nullable String separateTextureTypeForImage(String typeText) {
-        final String dim = switch (typeText) {
-            case "image1D", "iimage1D", "uimage1D" -> "1D";
-            case "image2D", "iimage2D", "uimage2D" -> "2D";
-            case "image3D", "iimage3D", "uimage3D" -> "3D";
-            default -> null;
-        };
-        if (dim == null) return null;
-        return typeText.charAt(0) == 'i' ? "itexture" + dim : typeText.charAt(0) == 'u' ? "utexture" + dim : "texture" + dim;
+        return ReadOnlyImages.textureType(typeText);
     }
 
     private static @Nullable String separateTextureType(String typeText) {

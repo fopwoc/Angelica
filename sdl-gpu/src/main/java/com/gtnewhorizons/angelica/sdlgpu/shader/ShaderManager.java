@@ -129,15 +129,15 @@ public final class ShaderManager {
     }
 
     static ShaderDiskCache.Key stageKey(String source, int glShaderType) {
-        return ShaderDiskCache.key("julia-samplers-v3-sdl-stage").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType);
+        return ShaderDiskCache.key("julia-images-v4-sdl-stage").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType);
     }
 
     static ShaderDiskCache.Key prewarmKey(String source, int glShaderType, PerFrameUniformBlock perFrame, PerFrameUniformBlock perPass) {
-        return appendBlocks(ShaderDiskCache.key("julia-samplers-v3-sdl-prewarm").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType), perFrame, perPass);
+        return appendBlocks(ShaderDiskCache.key("julia-images-v4-sdl-prewarm").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId()).str(source).i(glShaderType), perFrame, perPass);
     }
 
     static ShaderDiskCache.Key transformDiskKey(String source, int glShaderType, PerFrameUniformBlock perFrame, PerFrameUniformBlock perPass) {
-        return appendBlocks(ShaderDiskCache.key("sdl-transform").str(source).i(glShaderType), perFrame, perPass);
+        return appendBlocks(ShaderDiskCache.key("julia-images-v4-sdl-transform").str(source).i(glShaderType), perFrame, perPass);
     }
 
     private static ShaderDiskCache.Key appendBlocks(ShaderDiskCache.Key key, PerFrameUniformBlock perFrame, PerFrameUniformBlock perPass) {
@@ -930,7 +930,7 @@ public final class ShaderManager {
     }
 
     private static ShaderDiskCache.Key variantKey(String vertexSource, List<UscaledRetype.Attrib> attribs) {
-        final ShaderDiskCache.Key key = ShaderDiskCache.key("julia-samplers-v3-sdl-vertex-variant").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId())
+        final ShaderDiskCache.Key key = ShaderDiskCache.key("julia-images-v4-sdl-vertex-variant").str(SpirvCompiler.toolchainId()).str(CrossCompileUtil.spvcId())
             .str(vertexSource).i(attribs.size());
         for (UscaledRetype.Attrib a : attribs) {
             key.str(a.name()).i(a.location()).i(a.declVecSize()).i(a.boundVecSize()).i(a.signed() ? 1 : 0);
