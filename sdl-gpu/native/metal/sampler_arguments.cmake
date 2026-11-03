@@ -6,11 +6,16 @@ if(arguments_patched EQUAL -1)
 {]=] [=[typedef struct MetalShader
 {
     id<MTLArgumentEncoder> juliaArguments;]=])
+    # SDL's common validation casts a pipeline pointer to this header; it must remain the prefix.
     julia_replace([=[typedef struct MetalGraphicsPipeline
-{]=] [=[typedef struct MetalGraphicsPipeline
 {
+    GraphicsPipelineCommonHeader header;]=] [=[typedef struct MetalGraphicsPipeline
+{
+    GraphicsPipelineCommonHeader header;
     id<MTLArgumentEncoder> juliaVertexArguments;
-    id<MTLArgumentEncoder> juliaFragmentArguments;]=])
+    id<MTLArgumentEncoder> juliaFragmentArguments;]=] 1)
+    julia_replace([=[} MetalGraphicsPipeline;]=] [=[} MetalGraphicsPipeline;
+SDL_COMPILE_TIME_ASSERT(JuliaMetalPipelineHeaderPrefix, offsetof(MetalGraphicsPipeline, header) == 0);]=] 1)
     julia_replace([=[        metalShader->function = nil;]=] [=[        metalShader->juliaArguments = nil;
         metalShader->function = nil;]=])
     julia_replace([=[        metalGraphicsPipeline->handle = nil;]=] [=[        metalGraphicsPipeline->juliaVertexArguments = nil;

@@ -4,21 +4,24 @@ import static com.gtnewhorizons.angelica.sdlgpu.diagnostic.TraceUniforms.*;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_BASE_LEVEL;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
+import com.gtnewhorizons.angelica.config.SystemProperties;
+import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
+import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.sampler.SamplerLookup;
 import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager.ProgramObject;
-import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
-import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import org.lwjgl.sdl.SDLGPU;
 
 /** Opt-in CPU-side graphics snapshots. Never reads back GPU resources or changes render state. */
 public final class DrawTrace implements AutoCloseable {
     // Checked before every draw; skips subsystem lookup when tracing is off for the whole process.
+    private static final boolean GPU_DEBUG = SystemProperties.SDL_GPU_DEBUG;
     private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace");
     // Frame index and two bounded content-addressed source paths accompany each snapshot.
     private static final int SOURCE_HEADER_BYTES = 256;
@@ -71,13 +74,25 @@ public final class DrawTrace implements AutoCloseable {
     }
 
     public static void beforeDraw(ContextState state) {
-        if (REQUESTED) Subsystems.current().drawTrace().capture(state);
+        if (!REQUESTED) return;
+        Subsystems.current().drawTrace().capture(state);
+    }
+
+    public static void labelDraw(ContextState state) {
+        if (REQUESTED) label(state, "draw");
     }
 
     public static void afterCompute(ContextState state, int x, int y, int z, long indirect) {
         if (!REQUESTED) return;
+        label(state, "compute");
         var trace = Subsystems.current().drawTrace();
         if (trace.compute != null) trace.compute.capture(state, x, y, z, indirect);
+    }
+
+    private static void label(ContextState state, String operation) {
+        if (!GPU_DEBUG) return;
+        long command = Upstream.frames().getCommandBuffer();
+        if (command != 0) SDLGPU.SDL_InsertGPUDebugLabel(command, "GL " + operation + " program=" + state.boundProgram);
     }
 
     private void capture(ContextState state) {

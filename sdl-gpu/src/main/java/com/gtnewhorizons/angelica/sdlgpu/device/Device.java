@@ -508,6 +508,7 @@ public final class Device {
         logCallback = SDL_LogOutputFunction.create((userdata, category, priority, message) -> {
             if (lost) return;
             final String msg = memUTF8(message);
+            com.gtnewhorizons.angelica.sdlgpu.diagnostic.GpuFaultLog.record(priority, msg);
             switch (priority) {
                 case SDLLog.SDL_LOG_PRIORITY_ERROR, SDLLog.SDL_LOG_PRIORITY_CRITICAL -> LOG.error("[SDL] {}", msg);
                 case SDLLog.SDL_LOG_PRIORITY_WARN -> LOG.warn("[SDL] {}", msg);

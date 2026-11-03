@@ -26,6 +26,13 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
 
 - `sdlgpu.HostedBackend` is the registered backend; `sdlgpu.layer` holds its overrides, one abstract layer per GL
   domain. `Subsystems` holds their state, and `Upstream` reaches the widened upstream internals.
+- GPU device creation installs a fatal native assertion handler (`native/common/assertions.cmake`), so assertions
+  report their condition and location without opening SDL's dialog. The common integer-sampler validator admits
+  typed texture reads on the extended Metal/Vulkan backends while preserving physical format-support checks.
+  Metal pipeline extension fields follow SDL's common header; a compile-time offset assertion preserves that ABI.
+- Metal completion errors are logged by `native/metal/gpu_errors.m` before downstream queries report collateral
+  failures. GPU debug mode enables encoder error details and shader validation; draw tracing adds program signposts
+  even after its CPU snapshot quota is exhausted.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
 - `sdlgpu.extension` binds the native SDL extensions built from `sdl-gpu/native`.
@@ -67,6 +74,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `ResourceManager.shouldDeferTextureUpload`: always `false`; bound uploads and inline writes share one command stream.
 - `QuadConverter`: `bufferData` instead of `bufferSubData`; earlier deferred draws keep their indices.
 - `FragmentShaderGenerator`, `FullscreenPass`: `ShaderSources` instead of Embeddium's `ShaderLoader`.
+- `Device.installLogCallback`: `GpuFaultLog.record` preserves native error messages in the host-selected run directory
+  before an assertion abort or downstream query failure terminates the process.
 - `Device`: reads the application's window through `WindowSource` (`setWindowSource`) instead of LWJGL2's `Display`.
   The window itself, its borrowing and its event loop belong to Julia.
 - `SDLGPURenderBackend.init`: the loading-checkpoint listener only flushes. Startup-complete state still controls
@@ -86,7 +95,7 @@ Keep this list current. One line per hook: file, what it calls, and why.
 - `ResourceManager`: `TextureStorage.changed()` before taking and after releasing the write lock in the four texture
   map writers, so per-draw caches of derived texture state know to refresh.
 - `PipelineApplier.ensureDrawRenderPass`: `DrawTrace.beforeDraw` at the common draw boundary, including indirect and
-  instanced draws.
+  instanced draws; `DrawTrace.labelDraw` labels the active encoder after render-pass creation.
 - `RenderBackend.compatShaderSource` (new, defaults to `CompatShaderTransformer.transform`): `GLSMPrograms.glShaderSource`
   calls it; `ShaderLayer` overrides it to resolve conditional GLSL first (`CompatShaderInput`).
 - `RenderBackend.selectTextureTarget`/`answersTextureBindingQuery`/`onTextureDeleted` (new, no-op defaults): called at

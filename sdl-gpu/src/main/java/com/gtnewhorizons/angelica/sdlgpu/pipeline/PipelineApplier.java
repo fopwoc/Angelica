@@ -136,6 +136,7 @@ public final class PipelineApplier {
         DrawTrace.beforeDraw(st);
         logicOpEmulator.beforeDraw(st, f);
         ensureRenderPass(st, f, true);
+        DrawTrace.labelDraw(st);
     }
 
     public void ensureRenderPass(ContextState st) {
