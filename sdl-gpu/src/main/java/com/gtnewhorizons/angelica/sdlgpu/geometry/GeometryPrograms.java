@@ -36,9 +36,7 @@ public final class GeometryPrograms implements AutoCloseable {
                     "Geometry programs require one vertex, geometry and fragment stage");
         for (int stage : List.of(GL_VERTEX_SHADER, GL_GEOMETRY_SHADER))
             for (var token : GeometrySyntax.parse(stages.get(stage)).tokens())
-                if (token.getText().contains("sampler")
-                        || token.getText().contains("image")
-                        || token.getText().startsWith("atomic"))
+                if (token.getText().contains("image") || token.getText().startsWith("atomic"))
                     throw new UnsupportedOperationException(
                             "Geometry pre-raster resources/side effects are not wired: " + token.getText());
         String geometry = stages.get(GL_GEOMETRY_SHADER),
@@ -55,10 +53,12 @@ public final class GeometryPrograms implements AutoCloseable {
                             "Geometry application storage/uniform blocks are not wired yet");
             }
         var kernel = GeometryCompute.lower(geometry, new GeometryCompute.Bindings(0, 1, 2, 4));
-        if (kernel.layout().input() != GeometryLayout.Input.TRIANGLES
-                || kernel.layout().output() != GeometryLayout.Output.TRIANGLE_STRIP)
+        if (!Set.of(GeometryLayout.Input.TRIANGLES, GeometryLayout.Input.POINTS)
+                        .contains(kernel.layout().input())
+                || !Set.of(GeometryLayout.Output.TRIANGLE_STRIP, GeometryLayout.Output.POINTS)
+                        .contains(kernel.layout().output()))
             throw new UnsupportedOperationException(
-                    "Geometry draw wiring currently requires triangle input and triangle-strip output");
+                    "Geometry draw wiring requires point/triangle input and point/triangle-strip output");
         var logical = Upstream.shaders().getProgram(id);
         var requested = new HashMap<String, Integer>();
         for (var entry : logical.attribLocationBindings.object2IntEntrySet())
@@ -148,10 +148,12 @@ public final class GeometryPrograms implements AutoCloseable {
     boolean draw(int mode, GeometryDraw draw) {
         var executable = programs.get(Upstream.context().boundProgram);
         if (executable == null) return false;
-        if (mode != GL_TRIANGLES) throw new UnsupportedOperationException("Geometry draw wiring requires GL_TRIANGLES");
+        int expectedMode = executable.layout().input() == GeometryLayout.Input.POINTS ? GL_POINTS : GL_TRIANGLES;
+        if (mode != expectedMode)
+            throw new IllegalArgumentException("Geometry draw topology disagrees with its input layout");
         if (Upstream.context().primitiveRestartEnabled)
             throw new UnsupportedOperationException("Geometry primitive restart is not wired yet");
-        if (draw.primitives() != 0) executable.draw(draw);
+        if (draw.primitives(executable.layout().input()) != 0) executable.draw(draw);
         return true;
     }
 

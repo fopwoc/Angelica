@@ -10,6 +10,28 @@ import org.junit.jupiter.api.Test;
 
 class GeometryUniformsTest {
     @Test
+    void mergesComputeSamplerAssignmentsIntoThePublicNamespace() {
+        var logical = new ProgramObject();
+        var compute = new ProgramObject();
+        var raster = new ProgramObject();
+        add(compute, "_vertex_uniform_positions", null);
+        add(compute, "tint", null);
+        add(raster, "tint", null);
+        compute.allSamplerNames.addAll(List.of("_vertex_uniform_positions", "tint"));
+        raster.allSamplerNames.add("tint");
+        raster.fragmentSamplerNames = List.of("tint");
+        GeometryUniforms.merge(logical, compute, raster);
+        assertEquals(2, logical.uniformSlotCount);
+        for (String name : List.of("positions", "tint")) {
+            int slot = logical.nameToLocation.getInt(name);
+            assertTrue(slot >= 0);
+            assertEquals(ProgramObject.LOCATION_KIND_SAMPLER, logical.locationKind[slot]);
+            assertEquals(0, logical.locationSamplerUnit[slot]);
+        }
+        assertEquals(-1, logical.nameToLocation.getInt("_vertex_uniform_positions"));
+    }
+
+    @Test
     void mergesUserUniformsAcrossComputeAndRasterWithoutExposingTransport() {
         var compute = new ProgramObject();
         var raster = new ProgramObject();

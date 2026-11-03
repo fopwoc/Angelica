@@ -28,9 +28,18 @@ final class TraceUniforms {
     static String packed(FloatBuffer buffer, UniformMemberInfo[] members, int location) {
         if (buffer == null || location >= members.length || members[location] == null) return "-";
         var member = members[location];
-        int count = Math.min(member.vectorSize(), buffer.capacity() - member.offset() / 4);
-        var data = new float[Math.max(0, count)];
-        for (int i = 0; i < data.length; i++) data[i] = buffer.get(member.offset() / 4 + i);
+        int components = member.vectorSize() * member.columns();
+        int count = Math.min(16, components * Math.max(1, member.arrayLen()));
+        var data = new float[count];
+        for (int i = 0; i < data.length; i++) {
+            int element = i / components, component = i % components;
+            int offset = member.offset() + element * member.arrayStride();
+            offset += member.columns() > 1
+                    ? component / member.vectorSize() * 16 + component % member.vectorSize() * 4
+                    : component * 4;
+            if (offset < 0 || offset / 4 >= buffer.capacity()) return "out-of-bounds@" + member.offset();
+            data[i] = buffer.get(offset / 4);
+        }
         return values(data, member) + "@" + member.offset();
     }
 }

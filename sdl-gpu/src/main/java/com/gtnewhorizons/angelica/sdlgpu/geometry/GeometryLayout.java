@@ -55,7 +55,7 @@ public record GeometryLayout(
     }
 
     public int outputOffset(String name) {
-        int offset = 32; // position plus viewport/layer/primitive/strip metadata
+        int offset = outputHeaderSize();
         for (var field : outputs) {
             offset = GeometryField.align(offset, field.alignment());
             if (field.name().equals(name)) return offset;
@@ -65,9 +65,14 @@ public record GeometryLayout(
     }
 
     public int outputStride() {
-        int offset = 32;
+        int offset = outputHeaderSize();
         for (var field : outputs) offset = Math.addExact(GeometryField.align(offset, field.alignment()), field.size());
         return GeometryField.align(offset, 16);
+    }
+
+    private int outputHeaderSize() {
+        // Point rasterization also carries the emitted size; triangle record layouts stay unchanged.
+        return output == Output.POINTS ? 48 : 32;
     }
 
     public Dispatch dispatch(int primitives, long maxBufferBytes) {

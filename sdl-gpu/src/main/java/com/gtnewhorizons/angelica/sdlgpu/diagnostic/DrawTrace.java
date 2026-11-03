@@ -109,7 +109,9 @@ public final class DrawTrace implements AutoCloseable {
                         + " fbo=" + state.boundFboId + " viewport=" + state.viewportX + "," + state.viewportY + ","
                         + state.viewportW + "," + state.viewportH + " depth=" + pipeline.depthTestEnabled + "/"
                         + pipeline.depthWriteEnabled + "/" + pipeline.depthCompareOp + " masks="
-                        + Long.toHexString(Subsystems.current().colorMasks().packed()) + "\n";
+                        + Long.toHexString(Subsystems.current().colorMasks().packed()) + " cull="
+                        + pipeline.cullEnabled + "/" + pipeline.cullFaceMode + "/" + pipeline.frontFace
+                        + " cullAll=" + pipeline.cullAll + "\n";
         snapshot.append(header);
         controls.append(header);
         snapshot.append("blend=")

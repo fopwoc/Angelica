@@ -52,6 +52,8 @@ public final class GeometryRaster {
                     gl_Position=_geometry_vertices[corner.x]._geometry_position;
                     _geometry_primitive_id=int(corner.w);
                 """);
+        if (layout.output() == GeometryLayout.Output.POINTS)
+            source.append("gl_PointSize=_geometry_vertices[corner.x]._geometry_point.x;\n");
         source.append("uint provoking=(_geometry_corner_first+uint(gl_VertexID)/")
                 .append(arity)
                 .append("u*")

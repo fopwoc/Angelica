@@ -116,12 +116,17 @@ public final class GeometryCompute {
             throw new IllegalArgumentException("Incomplete or nonliteral geometry layout", failure);
         }
         Map<String, String> names = Map.ofEntries(
-                Map.entry("gl_in", "_geometry_in"), Map.entry("gl_Position", "_geometry_position"),
+                Map.entry("gl_in", "_geometry_in"),
+                Map.entry("gl_Position", "_geometry_position"),
+                Map.entry("gl_PointSize", "_geometry_point_size"),
                 Map.entry("gl_InvocationID", "_geometry_invocation"),
-                        Map.entry("gl_PrimitiveIDIn", "_geometry_primitive_in"),
-                Map.entry("gl_PrimitiveID", "_geometry_primitive_out"), Map.entry("gl_Layer", "_geometry_layer"),
-                Map.entry("gl_ViewportIndex", "_geometry_viewport"), Map.entry("EmitVertex", "_geometry_emit"),
-                Map.entry("EndPrimitive", "_geometry_end"), Map.entry("main", "_geometry_stage"));
+                Map.entry("gl_PrimitiveIDIn", "_geometry_primitive_in"),
+                Map.entry("gl_PrimitiveID", "_geometry_primitive_out"),
+                Map.entry("gl_Layer", "_geometry_layer"),
+                Map.entry("gl_ViewportIndex", "_geometry_viewport"),
+                Map.entry("EmitVertex", "_geometry_emit"),
+                Map.entry("EndPrimitive", "_geometry_end"),
+                Map.entry("main", "_geometry_stage"));
         for (int i = 0; i < tokens.size(); i++) {
             var token = tokens.get(i);
             if (removed.get(token.getTokenIndex())) continue;
@@ -173,7 +178,7 @@ public final class GeometryCompute {
                 .append(vertices)
                 .append("];\n")
                 .append(
-                        "vec4 _geometry_position; int _geometry_invocation, _geometry_primitive_in, _geometry_primitive_out, _geometry_layer, _geometry_viewport;\n")
+                        "vec4 _geometry_position; float _geometry_point_size; int _geometry_invocation, _geometry_primitive_in, _geometry_primitive_out, _geometry_layer, _geometry_viewport;\n")
                 .append("uint _geometry_job, _geometry_emitted, _geometry_strip, _geometry_overflow;\n");
         for (var field : layout.inputs())
             code.append(field.type())
@@ -193,6 +198,8 @@ public final class GeometryCompute {
                 .append("_geometry_outputs[target]._geometry_position=_geometry_position;\n")
                 .append(
                         "_geometry_outputs[target]._geometry_routing=ivec4(_geometry_viewport,_geometry_layer,_geometry_primitive_out,int(_geometry_strip));\n");
+        if (layout.output() == GeometryLayout.Output.POINTS)
+            code.append("_geometry_outputs[target]._geometry_point=vec4(_geometry_point_size,0,0,0);\n");
         for (var field : layout.outputs())
             code.append("_geometry_outputs[target].")
                     .append(field.name())
@@ -208,7 +215,7 @@ public final class GeometryCompute {
                 .append(layout.invocations())
                 .append("u);\n")
                 .append(
-                        "_geometry_primitive_in=int(primitive)+_geometry_primitive_base;\n_geometry_primitive_out=_geometry_primitive_in;\n_geometry_layer=0; _geometry_viewport=0; _geometry_emitted=0u; _geometry_strip=0u; _geometry_overflow=0u;\n")
+                        "_geometry_primitive_in=int(primitive)+_geometry_primitive_base;\n_geometry_primitive_out=_geometry_primitive_in;\n_geometry_point_size=1.; _geometry_layer=0; _geometry_viewport=0; _geometry_emitted=0u; _geometry_strip=0u; _geometry_overflow=0u;\n")
                 .append("uint source=_geometry_input_first+primitive;\nfor (int i=0;i<")
                 .append(vertices)
                 .append(";i++) {\n_geometry_in[i].gl_Position=_geometry_inputs[source]._geometry_position[i];\n");

@@ -37,6 +37,9 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
   (bridges) apart from execution changes (layers and hooks).
 - `shader.ProgramLinkState` restores image layout bindings through owned `ImageBindings`, using the GL units saved
   before backend slot remapping. Moved samplers retain their separate sampler-unit assignments.
+- GPU geometry execution accepts point/triangle input and point/triangle-strip output. Sampler reads in the vertex
+  and geometry stages share the public uniform namespace; point outputs carry emitted point size. Image accesses,
+  shader side effects, application blocks and layered framebuffer output remain explicit unsupported cases.
 - `sdlgpu.extension` binds the native SDL extensions built from `sdl-gpu/native`.
 - `sdlgpu.compat.GlDispatch` releases fabricated GL capabilities/provider state when the host closes its runtime.
 - `glsm.redirect.lwjgl3.Lwjgl3Redirects` owns generic GL routing after the base redirector. `RendererEndpoint` names

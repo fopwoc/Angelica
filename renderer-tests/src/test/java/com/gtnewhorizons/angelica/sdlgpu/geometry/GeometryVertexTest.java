@@ -41,6 +41,47 @@ class GeometryVertexTest {
             """;
 
     @Test
+    void lowersPointAmplificationWithVertexAndGeometryBufferSamplers() {
+        var geometry = GeometryCompute.lower("""
+                #version 460 core
+                layout(points) in;
+                layout(points,max_vertices=2) out;
+                in vec4 incoming[];
+                out vec4 shade;
+                uniform samplerBuffer tint;
+                void main(){
+                    for(int i=0;i<2;i++){
+                        shade=incoming[0]*texelFetch(tint,i);
+                        gl_Position=gl_in[0].gl_Position;
+                        gl_PointSize=float(i+1);
+                        EmitVertex();EndPrimitive();
+                    }
+                }
+                """, GeometryComputeTest.BINDINGS);
+        var plan = GeometryVertex.lower("""
+                #version 460 core
+                uniform samplerBuffer positions;
+                out vec4 incoming;
+                void main(){incoming=vec4(.5);gl_Position=texelFetch(positions,gl_VertexID);}
+                """, geometry, Map.of());
+        assertEquals(64, geometry.layout().outputStride());
+        assertEquals(48, geometry.layout().outputOffset("shade"));
+        var compiled = SpirvCompiler.compile(
+                plan.source(),
+                Shaderc.shaderc_glsl_compute_shader,
+                "geometry-point-samplers",
+                SpirvCompiler.Options.vulkanForced460Core(),
+                false);
+        assertNotNull(compiled.spirv(), compiled.error());
+        try {
+            var map = ShaderManager.remapSpirvForComputeSDLGPU(compiled.spirv());
+            assertTrue(List.of(map.samplerNames()).containsAll(List.of("tint", "_vertex_uniform_positions")));
+        } finally {
+            MemoryUtil.memFree(compiled.spirv());
+        }
+    }
+
+    @Test
     void compilesGpuVertexFetchAndGeometryInOneComputeKernel() {
         var plan =
                 GeometryVertex.lower(VERTEX, GeometryCompute.lower(GEOMETRY, GeometryComputeTest.BINDINGS), Map.of());
@@ -109,7 +150,9 @@ class GeometryVertexTest {
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> GeometryVertex.lower(
-                        VERTEX.replace("void main()", "uniform sampler2D texture; void main()"), kernel, Map.of()));
+                        VERTEX.replace("void main()", "layout(rgba32f,binding=1) uniform image2D texture; void main()"),
+                        kernel,
+                        Map.of()));
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> GeometryVertex.lower(VERTEX.replace("gl_VertexID", "gl_ViewIndex"), kernel, Map.of()));

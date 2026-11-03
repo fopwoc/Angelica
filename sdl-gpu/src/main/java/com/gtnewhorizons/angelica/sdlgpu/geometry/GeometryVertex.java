@@ -4,7 +4,7 @@ import java.util.*;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 
-/** Pure vertex stages are evaluated on the GPU before each geometry invocation; shader side effects are rejected. */
+/** Vertex stages, including texture reads, run on the GPU before each geometry invocation; side effects are rejected. */
 public final class GeometryVertex {
     public static final int META_BINDING = 3, FIRST_STREAM_BINDING = 4, INDEX_BINDING = 8, MAX_STREAMS = 4;
     public static final int META_WORDS = 36 * 4;
@@ -38,7 +38,6 @@ public final class GeometryVertex {
             if (token.getText().startsWith("_vertex_")
                     || token.getText().equals("struct")
                     || token.getText().equals("buffer")
-                    || token.getText().contains("sampler")
                     || token.getText().contains("image")
                     || token.getText().startsWith("atomic"))
                 throw new UnsupportedOperationException(
@@ -162,7 +161,9 @@ public final class GeometryVertex {
         header.append(rewrite.getText())
                 .append("\nvoid _vertex_prepare(uint primitive,int corner) {\n")
                 .append(
-                        "_vertex_instance=int(primitive/_vertex_meta[2].x); primitive%=_vertex_meta[2].x;\n_vertex_draw=int(_vertex_meta[2].z); _vertex_base_instance=int(_vertex_meta[2].y); _vertex_base_vertex=int(_vertex_meta[0].z);\nuint element=primitive*3u+uint(corner); uvec4 draw=_vertex_meta[0];\n")
+                        "_vertex_instance=int(primitive/_vertex_meta[2].x); primitive%=_vertex_meta[2].x;\n_vertex_draw=int(_vertex_meta[2].z); _vertex_base_instance=int(_vertex_meta[2].y); _vertex_base_vertex=int(_vertex_meta[0].z);\nuint element=primitive*"
+                                + geometry.layout().input().vertices()
+                                + "u+uint(corner); uvec4 draw=_vertex_meta[0];\n")
                 .append(
                         "uint index=draw.w==0u?draw.x+element:_vertex_read(4u,_vertex_meta[1].x+element*draw.w,draw.w);\n_vertex_id=int(index)+int(draw.z);\n");
         for (var input : inputs) {
@@ -203,7 +204,8 @@ public final class GeometryVertex {
         b = code.indexOf("_geometry_stage();", a);
         if (a < 0 || b < 0) throw new IllegalArgumentException("Geometry input transport load missing");
         code = code.substring(0, a)
-                + "_geometry_primitive_in=int(primitive%_vertex_meta[2].x)+_geometry_primitive_base; _geometry_primitive_out=_geometry_primitive_in;\n_vertex_bad=0u; for(int corner=0;corner<3;corner++) _vertex_prepare(primitive,corner);\n"
+                + "_geometry_primitive_in=int(primitive%_vertex_meta[2].x)+_geometry_primitive_base; _geometry_primitive_out=_geometry_primitive_in;\n_vertex_bad=0u; for(int corner=0;corner<"
+                + geometry.layout().input().vertices() + ";corner++) _vertex_prepare(primitive,corner);\n"
                 + "if(_vertex_bad!=0u) { _geometry_counts[_geometry_job]=uvec4(0,0,2,0); return; }\n"
                 + code.substring(b);
         int main = code.indexOf("void main()");

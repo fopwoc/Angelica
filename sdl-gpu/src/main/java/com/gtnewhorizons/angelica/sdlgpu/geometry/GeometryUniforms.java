@@ -30,6 +30,7 @@ final class GeometryUniforms {
         logical.fragmentSamplerNames = raster.fragmentSamplerNames;
         logical.fragmentImageNames = List.of();
         logical.vertexImageNames = List.of();
+        for (String name : compute.allSamplerNames) logical.allSamplerNames.add(publicName(name));
         logical.allSamplerNames.addAll(raster.allSamplerNames);
         for (String name : compute.boolUniforms) logical.boolUniforms.add(publicName(name));
         logical.boolUniforms.addAll(raster.boolUniforms);

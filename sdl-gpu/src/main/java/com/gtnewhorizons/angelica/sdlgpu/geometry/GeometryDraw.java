@@ -15,11 +15,11 @@ record GeometryDraw(
             throw new IllegalArgumentException("Invalid geometry draw range");
     }
 
-    int primitivesPerInstance() {
-        return count / 3;
+    int primitivesPerInstance(GeometryLayout.Input input) {
+        return count / input.vertices();
     }
 
-    int primitives() {
-        return Math.multiplyExact(primitivesPerInstance(), instances);
+    int primitives(GeometryLayout.Input input) {
+        return Math.multiplyExact(primitivesPerInstance(input), instances);
     }
 }

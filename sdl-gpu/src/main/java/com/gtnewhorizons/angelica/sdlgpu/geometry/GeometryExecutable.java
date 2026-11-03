@@ -105,7 +105,7 @@ final class GeometryExecutable implements AutoCloseable {
     }
 
     void draw(GeometryDraw draw) {
-        int primitives = draw.primitives();
+        int primitives = draw.primitives(layout.input());
         if (primitives == 0) return;
         var size = layout.dispatch(primitives, GeometryBuffers.MAX_BYTES);
         int cornerCount = Math.multiplyExact(size.jobs(), GeometryAssembly.cornersPerJob(layout));
@@ -117,7 +117,7 @@ final class GeometryExecutable implements AutoCloseable {
         for (int i = 0; i < views.length; i++) views[i] = viewportState.get(i);
         var parameters = MemoryUtil.memCalloc(16);
         var status = MemoryUtil.memAlloc((int) size.countsBytes());
-        try (var inputs = GeometryBuffers.inputs(vertex, draw);
+        try (var inputs = GeometryBuffers.inputs(vertex, draw, layout.input());
                 var saved = new GeometryDrawState()) {
             allocate(metadata, 3, inputs.metadata());
             allocate(vertices, 1, size.outputBytes());
@@ -171,7 +171,8 @@ final class GeometryExecutable implements AutoCloseable {
                 backend.applyGeometryViewport(view);
                 parameters.putInt(0, index).putInt(4, 0).putInt(8, 0);
                 allocate(control, 4, parameters);
-                backend.drawArrays(GL_TRIANGLES, 0, cornerCount);
+                backend.drawArrays(
+                        layout.output() == GeometryLayout.Output.POINTS ? GL_POINTS : GL_TRIANGLES, 0, cornerCount);
             }
         } finally {
             MemoryUtil.memFree(parameters);
