@@ -129,6 +129,10 @@ public final class DrawTrace implements AutoCloseable {
         var controls = new StringBuilder();
         var snapshot = new StringBuilder();
         var pipeline = state.pipeline;
+        snapshot.append("scissor=").append(state.scissorEnabled).append('/').append(state.scissorX).append(',')
+                .append(state.scissorY).append(',').append(state.scissorW).append(',').append(state.scissorH)
+                .append(" window=").append(Upstream.frames().getFbo0Width()).append(',')
+                .append(Upstream.frames().getFbo0Height()).append('\n');
         String header =
                 "program=" + state.boundProgram + " fragment=" + Integer.toHexString(program.fragmentSource.hashCode())
                         + " fbo=" + state.boundFboId + " viewport=" + state.viewportX + "," + state.viewportY + ","
