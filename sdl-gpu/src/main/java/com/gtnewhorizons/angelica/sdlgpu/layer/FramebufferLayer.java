@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL20.GL_BLEND_EQUATION_ALPHA;
 import static org.lwjgl.opengl.GL20.GL_BLEND_EQUATION_RGB;
 import static org.lwjgl.opengl.GL30.*;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.DrawTrace;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.bridge.BlendBridge;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.IndexedCapabilities;
@@ -195,6 +196,7 @@ public abstract class FramebufferLayer extends BufferLayer {
     public void clear(int mask) {
         subsystems().textureViews().flushSharedClears();
         var state = Upstream.context();
+        DrawTrace.beforeClear(state, mask);
         subsystems().framebuffers().validateDraw(state);
         mask &= ~subsystems().framebuffers().absentAspects(state);
         if (mask == 0) return;

@@ -29,6 +29,8 @@ public final class DrawTrace implements AutoCloseable {
     private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace") || CHECKPOINT.enabled();
     // Frame index and two bounded content-addressed source paths accompany each snapshot.
     private static final int SOURCE_HEADER_BYTES = 256;
+    private static final int CLEAR_LIMIT = 1024;
+    private int clears;
     private final boolean enabled;
     private TraceBudget budget;
     private TraceShaders shaders;
@@ -50,6 +52,7 @@ public final class DrawTrace implements AutoCloseable {
         if (writer != null) throw new IllegalStateException("Draw trace is already open");
         this.output = output;
         budget = new TraceBudget(2048, 64, 16 * 1024 * 1024);
+        clears = 0;
         shaders = new TraceShaders(output.resolve("draw-shaders"));
         try {
             writer = Files.newBufferedWriter(output.resolve("draw-trace.txt"), StandardCharsets.UTF_8);
@@ -80,6 +83,23 @@ public final class DrawTrace implements AutoCloseable {
         }
         close();
         open(output);
+    }
+
+    /** Logged on entry, before any path can drop the clear, so a clear that never lands is still visible. */
+    public static void beforeClear(ContextState state, int mask) {
+        if (!REQUESTED) return;
+        var trace = Subsystems.current().drawTrace();
+        if (trace.writer == null || trace.clears >= CLEAR_LIMIT) return;
+        trace.clears++;
+        try {
+            trace.writer.write("clear frame=" + trace.frame + " fbo=" + state.boundFboId + " mask="
+                    + Integer.toHexString(mask) + " active=" + Upstream.frames().isFrameActive() + " colorMask="
+                    + Integer.toHexString(state.pipeline.colorWriteMask) + " scissor=" + state.scissorEnabled + "/"
+                    + state.scissorX + "," + state.scissorY + "," + state.scissorW + "," + state.scissorH + " color="
+                    + state.clearR + "," + state.clearG + "," + state.clearB + "," + state.clearA + "\n");
+        } catch (IOException failure) {
+            throw new IllegalStateException("Cannot write draw trace", failure);
+        }
     }
 
     public static void beforeDraw(ContextState state) {
