@@ -19,6 +19,9 @@ import java.util.function.Supplier;
  * from GPU samples. All query kinds share one name space, as in GL.
  */
 public final class Queries implements AutoCloseable {
+    // Diagnostic only: separates false occlusion results from other causes of geometry an application skips drawing.
+    private static final boolean ASSUME_VISIBLE = Boolean.getBoolean("angelica.debug.assumeOcclusionVisible");
+
     private static final class Query {
         int target;
         // Timer queries hold timestamp samples; occlusion queries hold their visibility handle in start.
@@ -141,7 +144,9 @@ public final class Queries implements AutoCloseable {
     }
 
     private long samples(Query query) {
+        // Still consumes the native result so slot and completion handling match a normal run.
         long samples = occlusion().result(query.start);
+        if (ASSUME_VISIBLE) samples = Math.max(samples, 1);
         return query.target == GL_SAMPLES_PASSED ? samples : samples != 0 ? 1 : 0;
     }
 
