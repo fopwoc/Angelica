@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.vertex;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.sdl.SDLGPU.SDL_DrawGPUPrimitives;
 import static org.lwjgl.sdl.SDLGPU.SDL_DrawGPUPrimitivesIndirect;
 
 import com.gtnewhorizons.angelica.glsm.GLSMDraws;
@@ -58,6 +59,17 @@ public final class IndirectDraws {
         if (!frames.isRenderPassActive() || !pipeline.applyPipelineAndState(state))
             throw new IllegalStateException("Cannot prepare indirect draw pipeline");
         long pass = frames.getRenderPass();
+        long bytes = Math.addExact(Math.multiplyExact((long) count - 1, stride), 16);
+        var commands = CoherentIndirect.view(
+                Upstream.resources().getPersistentMapping(state.boundIndirectBuffer), offset, bytes);
+        if (commands != null) {
+            for (int i = 0; i < count; i++) {
+                int at = i * stride, vertices = commands.getInt(at), instances = commands.getInt(at + 4);
+                if (vertices != 0 && instances != 0)
+                    SDL_DrawGPUPrimitives(pass, vertices, instances, commands.getInt(at + 8), commands.getInt(at + 12));
+            }
+            return;
+        }
         if (stride == 16) SDL_DrawGPUPrimitivesIndirect(pass, buffer, (int) offset, count);
         else
             for (int i = 0; i < count; i++)

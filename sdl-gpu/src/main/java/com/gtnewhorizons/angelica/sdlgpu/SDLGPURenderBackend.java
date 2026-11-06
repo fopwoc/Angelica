@@ -34,6 +34,7 @@ import com.gtnewhorizons.angelica.sdlgpu.pipeline.AttachmentClear;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DepthStencilReadback;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DrawDispatch;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.FFPTrace;
+import com.gtnewhorizons.angelica.sdlgpu.vertex.CoherentIndirect;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.EncodedColorBlit;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.FullscreenPass;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.MovedSamplerConversion;
@@ -1244,7 +1245,19 @@ public class SDLGPURenderBackend extends RenderBackend {
                 drawDispatch.restartMultiDrawWarned = true;
             }
             if (SystemProperties.FFP_TRACE) ffpTrace.trace(st, "elementsIndirect", mode, drawcount, type, (int) indirect, 0);
-            SDL_DrawGPUIndexedPrimitivesIndirect(rp, indirectHandle, (int) indirect, drawcount);
+            final int step = stride == 0 ? 20 : stride;
+            final ByteBuffer commands = CoherentIndirect.view(
+                resourceManager.getPersistentMapping(st.boundIndirectBuffer), indirect, (drawcount - 1L) * step + 20);
+            if (commands != null) {
+                for (int i = 0; i < drawcount; i++) {
+                    final int at = i * step, indices = commands.getInt(at), instances = commands.getInt(at + 4);
+                    if (indices != 0 && instances != 0) {
+                        SDL_DrawGPUIndexedPrimitives(rp, indices, instances, commands.getInt(at + 8), commands.getInt(at + 12), commands.getInt(at + 16));
+                    }
+                }
+            } else {
+                SDL_DrawGPUIndexedPrimitivesIndirect(rp, indirectHandle, (int) indirect, drawcount);
+            }
             if (st.boundProgramObj != null && st.boundProgramObj.vertexWriteReplay != null) vertexWriteReplayer.noteIndirectDraw();
         } finally {
             Tracy.endZone();
@@ -1262,6 +1275,11 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (indirectGlId == 0) return;
         final long indirectHandle = resourceManager.getBufferHandle(indirectGlId);
         if (indirectHandle == 0) return;
+        final ByteBuffer commands = CoherentIndirect.view(resourceManager.getPersistentMapping(indirectGlId), offset, 12);
+        if (commands != null) {
+            computeBinder.executeComputeDispatch(s(), commands.getInt(0), commands.getInt(4), commands.getInt(8), 0L, false, 0);
+            return;
+        }
         computeBinder.executeComputeDispatch(s(), 0, 0, 0, indirectHandle, true, (int) offset);
     }
 

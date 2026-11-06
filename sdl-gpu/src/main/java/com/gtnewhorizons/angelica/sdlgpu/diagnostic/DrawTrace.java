@@ -1,5 +1,7 @@
 package com.gtnewhorizons.angelica.sdlgpu.diagnostic;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static com.gtnewhorizons.angelica.sdlgpu.diagnostic.TraceUniforms.*;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_BASE_LEVEL;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
@@ -20,6 +22,7 @@ import org.lwjgl.sdl.SDLGPU;
 
 /** Opt-in CPU-side graphics snapshots. Never reads back GPU resources or changes render state. */
 public final class DrawTrace implements AutoCloseable {
+    private static final Logger LOG = LogManager.getLogger("Angelica-SDLGPU");
     // Checked before every draw; skips subsystem lookup when tracing is off for the whole process.
     private static final boolean GPU_DEBUG = SystemProperties.SDL_GPU_DEBUG;
     private static final ComputeCheckpoint CHECKPOINT = new ComputeCheckpoint(System.getProperty("angelica.debug.stopBeforeCompute", ""));
@@ -64,8 +67,13 @@ public final class DrawTrace implements AutoCloseable {
         frame++;
         if (output == null) return;
         try {
-            TextureCapture.poll(output, frame);
-            BufferCapture.poll(output, frame);
+            try {
+                TextureCapture.poll(output, frame);
+                BufferCapture.poll(output, frame);
+            } catch (IllegalArgumentException invalid) {
+                // A mistaken diagnostic request must never take down the session it is inspecting.
+                LOG.error("Ignoring invalid capture request", invalid);
+            }
             if (!Files.deleteIfExists(output.resolve("draw-trace.request"))) return;
         } catch (IOException failure) {
             throw new IllegalStateException("Cannot consume draw-trace request", failure);

@@ -41,6 +41,8 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
   reading the native result. Use it to tell false negatives apart from other causes of geometry a mod stops drawing.
 - `angelica.debug.shaderPatches=<file>` applies literal `from ==> to` source replacements before shader caching, to
   ask a real game run what a shader decided per pixel. Diagnostic only; never ship a patch file.
+- Coherent persistent mappings live in CPU staging until an explicit flush or copy. Anything the GPU consumes directly
+  from such a buffer must read staging or upload first; `vertex.CoherentIndirect` does this for indirect commands.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
 - `shader.ProgramLinkState` restores image layout bindings through owned `ImageBindings`, using the GL units saved
