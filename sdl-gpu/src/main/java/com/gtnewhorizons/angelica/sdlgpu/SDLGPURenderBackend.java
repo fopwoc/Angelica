@@ -34,6 +34,7 @@ import com.gtnewhorizons.angelica.sdlgpu.pipeline.AttachmentClear;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DepthStencilReadback;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.DrawDispatch;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.FFPTrace;
+import com.gtnewhorizons.angelica.sdlgpu.pipeline.EncodedColorBlit;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.FullscreenPass;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.MovedSamplerConversion;
 import com.gtnewhorizons.angelica.sdlgpu.pipeline.PipelineApplier;
@@ -166,6 +167,7 @@ public class SDLGPURenderBackend extends RenderBackend {
     private final LongArrayFIFOQueue frameSyncs = new LongArrayFIFOQueue();
     final FBOClearTracker fboClearTracker = new FBOClearTracker(frameManager, resourceManager, shaderManager);
     private final SamplerBinder samplerBinder = new SamplerBinder(device, resourceManager, shaderManager);
+    private final EncodedColorBlit encodedColorBlit = new EncodedColorBlit(frameManager, resourceManager, pipelineStore, fullscreenPass);
     private final MovedSamplerConversion movedSamplerConversion = new MovedSamplerConversion(frameManager, pipelineStore, fullscreenPass);
     private final MovedSamplerCopies movedSamplerCopies = new MovedSamplerCopies(device, frameManager, resourceManager, movedSamplerConversion);
     private final StorageTextureBinder storageTextureBinder = new StorageTextureBinder(resourceManager, shaderManager, movedSamplerCopies);
@@ -3902,6 +3904,13 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (!clipScaled(r, 0, srcIsFbo0 ? frameManager.getFbo0Width() : TextureOps.levelWidth(srcMeta, srcLevel), srcIsFbo0 ? frameManager.getFbo0Height() : TextureOps.levelHeight(srcMeta, srcLevel), flipH, flipV)) return;
         if (!clipScaled(r, 4, dstIsFbo0 ? frameManager.getFbo0Width() : TextureOps.levelWidth(dstMeta, dstLevel), dstIsFbo0 ? frameManager.getFbo0Height() : TextureOps.levelHeight(dstMeta, dstLevel), flipH, flipV)) return;
         resolveBlitClears(cs, srcTex, dstTex, dstMeta, dstLevel, r[4], r[5], r[6], r[7], true);
+        final int dstFormat = dstMeta != null ? dstMeta.sdlFormat() : frameManager.getSwapchainFormat();
+        if (srcMeta != null && EncodedColorBlit.required(srcMeta.sdlFormat(), dstFormat)) {
+            final int targetW = dstIsFbo0 ? frameManager.getFbo0Width() : TextureOps.levelWidth(dstMeta, dstLevel);
+            final int targetH = dstIsFbo0 ? frameManager.getFbo0Height() : TextureOps.levelHeight(dstMeta, dstLevel);
+            encodedColorBlit.blit(cs, srcTex, srcLevel, TextureOps.levelWidth(srcMeta, srcLevel), TextureOps.levelHeight(srcMeta, srcLevel), r, flipH, flipV, dstTex, dstLevel, dstFormat, targetW, targetH, filter);
+            return;
+        }
         textureOps.blitTexture(srcTex, srcLevel, r[0], r[1], r[2], r[3], dstTex, dstLevel, r[4], r[5], r[6], r[7], filter, flipMode);
     }
 

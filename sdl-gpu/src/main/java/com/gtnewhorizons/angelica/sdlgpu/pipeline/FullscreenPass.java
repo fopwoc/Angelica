@@ -41,6 +41,8 @@ public final class FullscreenPass {
     private long sdlVertexShader;
     private long nearestSampler;
     private boolean samplerAttempted;
+    private long linearSampler;
+    private boolean linearSamplerAttempted;
     private boolean vertexFailed;
 
     public FullscreenPass(ShaderManager shaderManager, Device device) {
@@ -95,6 +97,23 @@ public final class FullscreenPass {
             if (nearestSampler == 0L) LOG.error("FullscreenPass: sampler creation failed: {}", SDLError.SDL_GetError());
         }
         return nearestSampler;
+    }
+
+    long getLinearSampler() {
+        if (linearSamplerAttempted) return linearSampler;
+        linearSamplerAttempted = true;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            final SDL_GPUSamplerCreateInfo ci = SDL_GPUSamplerCreateInfo.calloc(stack)
+                .min_filter(SDL_GPU_FILTER_LINEAR)
+                .mag_filter(SDL_GPU_FILTER_LINEAR)
+                .mipmap_mode(SDL_GPU_SAMPLERMIPMAPMODE_NEAREST)
+                .address_mode_u(SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE)
+                .address_mode_v(SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE)
+                .address_mode_w(SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE);
+            linearSampler = SDL_CreateGPUSampler(device.getDevice(), ci);
+            if (linearSampler == 0L) LOG.error("FullscreenPass: linear sampler creation failed: {}", SDLError.SDL_GetError());
+        }
+        return linearSampler;
     }
 
     private long compileFragment(String fragmentSource, int requiredUboSize, String label) {
@@ -214,6 +233,7 @@ public final class FullscreenPass {
             }
             if (sdlVertexShader != 0L) SDL_ReleaseGPUShader(dev, sdlVertexShader);
             if (nearestSampler != 0L) SDL_ReleaseGPUSampler(dev, nearestSampler);
+            if (linearSampler != 0L) SDL_ReleaseGPUSampler(dev, linearSampler);
         }
         for (Fragment fragment : fragments) {
             fragment.shader = 0;
@@ -224,6 +244,8 @@ public final class FullscreenPass {
         sdlVertexShader = 0;
         nearestSampler = 0;
         samplerAttempted = false;
+        linearSampler = 0;
+        linearSamplerAttempted = false;
         vertexFailed = false;
     }
 }
