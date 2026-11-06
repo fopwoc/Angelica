@@ -39,6 +39,8 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
   include resolved read/write image bindings; they never perform GPU readback or run the selected shader.
 - `angelica.debug.assumeOcclusionVisible=true` makes every occlusion query report at least one sample while still
   reading the native result. Use it to tell false negatives apart from other causes of geometry a mod stops drawing.
+- `angelica.debug.shaderPatches=<file>` applies literal `from ==> to` source replacements before shader caching, to
+  ask a real game run what a shader decided per pixel. Diagnostic only; never ship a patch file.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
 - `shader.ProgramLinkState` restores image layout bindings through owned `ImageBindings`, using the GL units saved

@@ -206,6 +206,7 @@ public final class ShaderManager {
         if (!raw.isEmpty() && raw.charAt(raw.length() - 1) == '\0') {
             raw = raw.substring(0, raw.length() - 1);
         }
+        raw = DebugShaderPatches.apply(raw);
 
         final PrewarmHit hit = lookupPrewarm(raw, obj.type);
         if (hit != null) {
