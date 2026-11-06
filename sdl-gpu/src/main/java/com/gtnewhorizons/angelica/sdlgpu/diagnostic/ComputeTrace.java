@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.diagnostic;
 
+import com.gtnewhorizons.angelica.sdlgpu.shader.ShaderManager;
 import static com.gtnewhorizons.angelica.sdlgpu.diagnostic.TraceUniforms.*;
 
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -18,8 +19,12 @@ final class ComputeTrace implements AutoCloseable {
     private final BufferedWriter writer;
 
     ComputeTrace(Path output) throws IOException {
+        this(output, "compute-trace.txt");
+    }
+
+    ComputeTrace(Path output, String filename) throws IOException {
         shaders = new TraceShaders(output.resolve("compute-shaders"));
-        writer = Files.newBufferedWriter(output.resolve("compute-trace.txt"), StandardCharsets.UTF_8);
+        writer = Files.newBufferedWriter(output.resolve(filename), StandardCharsets.UTF_8);
     }
 
     void capture(ContextState state, int x, int y, int z, long indirect) {
@@ -55,6 +60,8 @@ final class ComputeTrace implements AutoCloseable {
             }
         var map = program.computeBindingMap;
         if (map != null) {
+            images(snapshot, state, program, "read", map.roStorageTextureNames(), map.roStorageTextureGlSlots());
+            images(snapshot, state, program, "write", map.rwStorageTextureNames(), map.rwStorageTextureGlSlots());
             int[] slots = map.samplerGlSlots();
             String[] names = map.samplerNames();
             for (int slot = 0; slot < slots.length; slot++) {
@@ -88,6 +95,32 @@ final class ComputeTrace implements AutoCloseable {
             writer.flush();
         } catch (IOException failure) {
             throw new IllegalStateException("Cannot write compute trace", failure);
+        }
+    }
+
+    private static void images(
+            StringBuilder out,
+            ContextState state,
+            ShaderManager.ProgramObject program,
+            String access,
+            String[] names,
+            int[] slots) {
+        for (int slot = 0; slot < slots.length; slot++) {
+            String name = names[slot];
+            int unit = program.imageTextureUnits.containsKey(name) ? program.imageTextureUnits.getInt(name) : slots[slot];
+            out.append("image ").append(access).append(' ').append(slot).append(' ').append(name).append(" unit=").append(unit);
+            if (unit < 0 || unit >= state.boundStorageTextureByUnit.length) {
+                out.append(" invalid-unit\n");
+                continue;
+            }
+            int texture = state.boundStorageTextureByUnit[unit];
+            out.append(" texture=").append(texture)
+                    .append(" level=").append(state.boundStorageTextureLevel[unit])
+                    .append(" layer=").append(state.boundStorageTextureLayer[unit])
+                    .append(" layered=").append(state.boundStorageTextureLayered[unit])
+                    .append(" access=").append(state.boundStorageTextureAccess[unit])
+                    .append(" format=").append(state.boundStorageTextureFormat[unit])
+                    .append(" storage=").append(Upstream.resources().getTextureMeta(texture)).append('\n');
         }
     }
 

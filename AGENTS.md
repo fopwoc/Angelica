@@ -33,6 +33,10 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
 - Metal completion errors are logged by `native/metal/gpu_errors.m` before downstream queries report collateral
   failures. GPU debug mode enables encoder error details and shader validation; draw tracing adds program signposts
   even after its CPU snapshot quota is exhausted.
+- `angelica.debug.stopBeforeCompute=<shader SHA-256>` enables tracing and records `compute-checkpoint.txt` before
+  the selected dispatch, then throws through the host's fatal path without submitting that dispatch. Matching uses
+  the same compiler-input fingerprint as trace source filenames. Checkpoint snapshots inspect CPU state only and
+  include resolved read/write image bindings; they never perform GPU readback or run the selected shader.
 - `sdlgpu.bridge` holds static GL entry points that Julia's rewritten game code calls by name. Keep entry points
   (bridges) apart from execution changes (layers and hooks).
 - `shader.ProgramLinkState` restores image layout bindings through owned `ImageBindings`, using the GL units saved

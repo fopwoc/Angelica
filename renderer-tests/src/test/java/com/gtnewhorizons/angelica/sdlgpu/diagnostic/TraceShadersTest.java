@@ -15,6 +15,7 @@ class TraceShadersTest {
     void savesExactDistinctSourcesAndDeduplicatesRepeatedPrograms() throws Exception {
         var shaders = new TraceShaders(output.resolve("draw-shaders"));
         String first = shaders.write("#version 330\nvoid main() {}\n");
+        assertEquals("draw-shaders/" + TraceShaders.fingerprint("#version 330\nvoid main() {}\n") + ".glsl", first);
         assertEquals(first, shaders.write("#version 330\nvoid main() {}\n"));
         assertNotEquals(first, shaders.write("#version 450\nvoid main() {}\n"));
         assertEquals("#version 330\nvoid main() {}\n", Files.readString(output.resolve(first)));

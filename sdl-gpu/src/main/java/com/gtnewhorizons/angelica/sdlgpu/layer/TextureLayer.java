@@ -348,6 +348,7 @@ public abstract class TextureLayer extends FramebufferLayer {
 
     @Override
     public void dispatchCompute(int x, int y, int z) {
+        DrawTrace.beforeCompute(Upstream.context(), x, y, z, -1);
         subsystems().textureViews().beforeCompute();
         super.dispatchCompute(x, y, z);
         DrawTrace.afterCompute(Upstream.context(), x, y, z, -1);
@@ -355,6 +356,7 @@ public abstract class TextureLayer extends FramebufferLayer {
 
     @Override
     public void dispatchComputeIndirect(long offset) {
+        DrawTrace.beforeCompute(Upstream.context(), 0, 0, 0, offset);
         subsystems().textureViews().beforeCompute();
         super.dispatchComputeIndirect(offset);
         DrawTrace.afterCompute(Upstream.context(), 0, 0, 0, offset);

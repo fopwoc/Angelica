@@ -22,7 +22,8 @@ import org.lwjgl.sdl.SDLGPU;
 public final class DrawTrace implements AutoCloseable {
     // Checked before every draw; skips subsystem lookup when tracing is off for the whole process.
     private static final boolean GPU_DEBUG = SystemProperties.SDL_GPU_DEBUG;
-    private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace");
+    private static final ComputeCheckpoint CHECKPOINT = new ComputeCheckpoint(System.getProperty("angelica.debug.stopBeforeCompute", ""));
+    private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace") || CHECKPOINT.enabled();
     // Frame index and two bounded content-addressed source paths accompany each snapshot.
     private static final int SOURCE_HEADER_BYTES = 256;
     private final boolean enabled;
@@ -87,6 +88,22 @@ public final class DrawTrace implements AutoCloseable {
         label(state, "compute");
         var trace = Subsystems.current().drawTrace();
         if (trace.compute != null) trace.compute.capture(state, x, y, z, indirect);
+    }
+
+    public static void beforeCompute(ContextState state, int x, int y, int z, long indirect) {
+        if (!CHECKPOINT.enabled()) return;
+        var program = Upstream.shaders().getProgram(state.boundProgram);
+        if (program == null) return;
+        String source = Upstream.shaders().getShaderSource(program.computeShader);
+        CHECKPOINT.beforeDispatch(state.boundProgram, source, () -> {
+            var trace = Subsystems.current().drawTrace();
+            if (trace.output == null) throw new IllegalStateException("Compute checkpoint has no trace output directory");
+            try (var checkpoint = new ComputeTrace(trace.output, "compute-checkpoint.txt")) {
+                checkpoint.capture(state, x, y, z, indirect);
+            } catch (IOException failure) {
+                throw new IllegalStateException("Cannot write compute checkpoint", failure);
+            }
+        });
     }
 
     private static void label(ContextState state, String operation) {

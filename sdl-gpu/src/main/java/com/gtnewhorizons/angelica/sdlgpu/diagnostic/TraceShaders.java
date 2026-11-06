@@ -27,17 +27,24 @@ final class TraceShaders {
         if (known != null) return known;
         byte[] bytes = source.getBytes(StandardCharsets.UTF_8);
         if (bytes.length > LIMIT - written) return "omitted-size-limit";
-        String name;
-        try {
-            name = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)) + ".glsl";
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new AssertionError(impossible);
-        }
+        String name = fingerprint(bytes) + ".glsl";
         Files.createDirectories(output);
         Files.write(output.resolve(name), bytes);
         written += bytes.length;
         String relative = output.getFileName() + "/" + name;
         names.put(source, relative);
         return relative;
+    }
+
+    static String fingerprint(String source) {
+        return fingerprint(source.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String fingerprint(byte[] bytes) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new AssertionError(impossible);
+        }
     }
 }
