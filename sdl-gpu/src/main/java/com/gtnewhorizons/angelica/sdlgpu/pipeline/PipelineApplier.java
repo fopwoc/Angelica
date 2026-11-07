@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.FrameCounters;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.sdlgpu.util.StencilReference;
@@ -500,6 +501,7 @@ public final class PipelineApplier {
         }
         if (pipeline != st.lastBoundPipeline) {
             if (Tracy.ENABLED) frameManager.noteBatchBreakPipeline();
+            if (FrameCounters.ENABLED) FrameCounters.PIPELINE_BINDS.increment();
             SDL_BindGPUGraphicsPipeline(rp, pipeline);
             st.lastBoundPipeline = pipeline;
             st.lastAppliedSamplerProgram = 0;

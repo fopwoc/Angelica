@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.frame;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.FrameCounters;
 import com.gtnewhorizons.angelica.sdlgpu.framebuffer.FramebufferHooks;
 import com.gtnewhorizons.angelica.config.SystemProperties;
 import com.gtnewhorizons.angelica.glsm.backend.BackendManager;
@@ -368,6 +369,7 @@ public final class FrameManager {
 
             if (preRenderPassHook != null) preRenderPassHook.run();
             assertNoEncoderActive(f, "SDL_BeginGPURenderPass(swapchain)");
+            if (FrameCounters.ENABLED) FrameCounters.RENDER_PASSES.increment();
             f.renderPass = SDL_BeginGPURenderPass(f.commandBuffer, colorTargets, depthTarget);
             if (f.renderPass == 0) {
                 throw new RuntimeException("Failed to begin render pass: " + SDLError.SDL_GetError());
@@ -548,6 +550,7 @@ public final class FrameManager {
         final long cb = getCommandBuffer(f);
         if (cb == 0) return 0;
         assertNoEncoderActive(f, "SDL_BeginGPUCopyPass");
+        if (FrameCounters.ENABLED) FrameCounters.COPY_PASSES.increment();
         f.copyPass = SDL_BeginGPUCopyPass(cb);
         if (Tracy.ENABLED) f.copyPassesThisFrame++;
         return f.copyPass;

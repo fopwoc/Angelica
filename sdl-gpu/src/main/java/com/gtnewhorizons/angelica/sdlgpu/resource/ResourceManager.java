@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.resource;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.FrameCounters;
 import com.gtnewhorizons.angelica.sdlgpu.texture.buffer.BufferTextureHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureViewHooks;
 import com.gtnewhorizons.angelica.sdlgpu.texture.TextureStorage;
@@ -1675,6 +1676,7 @@ public final class ResourceManager {
                 .buffer(dstHandle)
                 .offset((int) dstOffset)
                 .size(size);
+            if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
             SDL_UploadToGPUBuffer(f.arenaCopyPass, src, dst, cycle);
         }
         return true;
@@ -1777,6 +1779,7 @@ public final class ResourceManager {
                 .offset((int) dstOff)
                 .size((int) size);
 
+            if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
             SDL_UploadToGPUBuffer(copyPass, srcLoc, dst, cycle);
         }
 
@@ -1809,6 +1812,7 @@ public final class ResourceManager {
                 final SDL_GPUBufferRegion dst = SDL_GPUBufferRegion.calloc(stack).buffer(gpuBuffer);
                 for (long done = 0; done < size; done += chunk) {
                     dst.offset((int) (offset + done)).size((int) Math.min(chunk, size - done));
+                    if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                     SDL_UploadToGPUBuffer(copyPass, src, dst, false);
                     uploads++;
                 }
@@ -1843,6 +1847,7 @@ public final class ResourceManager {
                     .w(w).h(h).d(1);
                 for (int z = 0; z < d; z++) {
                     dst.z(z);
+                    if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                     SDL_UploadToGPUTexture(copyPass, src, dst, false);
                 }
             }
@@ -1927,6 +1932,7 @@ public final class ResourceManager {
                 dst.texture(texture).mip_level(f.pendingTexLevels.getInt(i))
                     .x(f.pendingTexX.getInt(i)).y(f.pendingTexY.getInt(i)).z(0)
                     .w(f.pendingTexW.getInt(i)).h(f.pendingTexH.getInt(i)).d(1);
+                if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                 SDL_UploadToGPUTexture(copyPass, src, dst, false);
             }
         }
@@ -2003,6 +2009,7 @@ public final class ResourceManager {
                     .mip_level(level)
                     .x(x).y(y).z(z)
                     .w(w).h(h).d(d);
+                if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                 SDL_UploadToGPUTexture(copyPass, src, dst, false);
             }
             markTextureContentDefined(tex);
@@ -2364,6 +2371,7 @@ public final class ResourceManager {
                     .mip_level(0)
                     .x(0).y(0).z(0)
                     .w(1).h(1).d(1);
+                if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                 SDL_UploadToGPUTexture(copyPass, src, dst, false);
                 SDL_EndGPUCopyPass(copyPass);
                 markTextureWritten(texture);
@@ -2392,6 +2400,7 @@ public final class ResourceManager {
                     .buffer(buffer)
                     .offset(0)
                     .size(bytes);
+                if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                 SDL_UploadToGPUBuffer(copyPass, src, dst, false);
                 SDL_EndGPUCopyPass(copyPass);
             }
@@ -2518,6 +2527,7 @@ public final class ResourceManager {
                     final long copyPass = SDL_BeginGPUCopyPass(cb);
                     final var src = SDL_GPUTransferBufferLocation.calloc(stack).transfer_buffer(xfer).offset(0);
                     final var dst = SDL_GPUBufferRegion.calloc(stack).buffer(dummyVertexBuffer).offset(0).size(DUMMY_VBO_SIZE);
+                    if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                     SDL_UploadToGPUBuffer(copyPass, src, dst, false);
                     SDL_EndGPUCopyPass(copyPass);
                     Submits.submit(cb);
@@ -2560,6 +2570,7 @@ public final class ResourceManager {
                 final int offset = slot * ATTRIB_SLOT_SIZE;
                 final var src = SDL_GPUTransferBufferLocation.calloc(stack).transfer_buffer(attribDefaultXfer).offset(offset);
                 final var dst = SDL_GPUBufferRegion.calloc(stack).buffer(dummyVertexBuffer).offset(offset).size(ATTRIB_SLOT_SIZE);
+                if (FrameCounters.ENABLED) FrameCounters.UPLOADS.increment();
                 SDL_UploadToGPUBuffer(copyPass, src, dst, false);
                 mask &= mask - 1;
             }

@@ -41,6 +41,8 @@ LWJGL3 only: no LWJGL2 API, lwjgl3ify, `org.lwjglx`, or Minecraft classes.
   rasterizer-discard change as it enters GLSM, with thread, the state that would drop it, and the calling game or mod
   code. It sits above every path that can drop a call, which the draw trace cannot see. `draw-trace.request` restarts
   both captures, since its line limit fills quickly.
+- `angelica.debug.counters=true` totals draws, pipeline binds, passes and uploads per frame into `counters.txt`, for as long
+  as a tool names a label in `angelica.debug.counters.label`.
 - `angelica.debug.assumeOcclusionVisible=true` makes every occlusion query report at least one sample while still
   reading the native result. Use it to tell false negatives apart from other causes of geometry a mod stops drawing.
 - `angelica.debug.shaderPatches=<file>` applies literal `from ==> to` source replacements before shader caching, to
@@ -115,6 +117,8 @@ Keep this list current. One line per hook: file, what it calls, and why.
   map writers, so per-draw caches of derived texture state know to refresh.
 - `GLSMFramebuffer.glClear`, `glBindFramebuffer`, `GLSMBlend.glClearColor`, and `GLSMEnable`'s rasterizer-discard cases: `GlEventTrace` calls
   behind its flag.
+- `SDLGPURenderBackend`, `DrawDispatch`, `PipelineApplier`, `FrameManager`, `ResourceManager`: `FrameCounters` increments
+  beside the SDL calls they count, behind its flag.
 - `PipelineApplier.ensureDrawRenderPass`: `DrawTrace.beforeDraw` at the common draw boundary, including indirect and
   instanced draws; `DrawTrace.labelDraw` labels the active encoder after render-pass creation.
 - `RenderBackend.compatShaderSource` (new, defaults to `CompatShaderTransformer.transform`): `GLSMPrograms.glShaderSource`

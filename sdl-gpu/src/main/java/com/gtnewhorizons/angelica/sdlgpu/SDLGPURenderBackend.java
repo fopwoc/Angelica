@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.FrameCounters;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
@@ -1152,6 +1153,7 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (f.renderPass == 0) { f.droppedDrawsThisFrame++; drawDispatch.warnDrawArraysNoRenderPass(mode, st.boundFboId); return; }
         if (!pipelineApplier.applyPipelineAndState(st, f)) { f.droppedDrawsThisFrame++; return; }
         if (SystemProperties.FFP_TRACE) ffpTrace.trace(st, "arrays", mode, count, 0, first, 0);
+        if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
         SDL_DrawGPUPrimitives(f.renderPass, count, 1, first, 0);
         captureVertexWrites(st, first, count, 1, 0, 0, 0);
     }
@@ -1252,6 +1254,7 @@ public class SDLGPURenderBackend extends RenderBackend {
                 for (int i = 0; i < drawcount; i++) {
                     final int at = i * step, indices = commands.getInt(at), instances = commands.getInt(at + 4);
                     if (indices != 0 && instances != 0) {
+                        if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
                         SDL_DrawGPUIndexedPrimitives(rp, indices, instances, commands.getInt(at + 8), commands.getInt(at + 12), commands.getInt(at + 16));
                     }
                 }
@@ -4525,6 +4528,7 @@ public class SDLGPURenderBackend extends RenderBackend {
         if (SystemProperties.FFP_TRACE) ffpTrace.trace(st, "arraysInstanced", mode, count, 0, first, 0);
         final long rp = frameManager.getRenderPass();
         pipelineApplier.bindInstancedConstants(st, rp, primcount);
+        if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
         SDL_DrawGPUPrimitives(rp, count, primcount, first, 0);
         captureVertexWrites(st, first, count, primcount, 0, 0, 0);
     }

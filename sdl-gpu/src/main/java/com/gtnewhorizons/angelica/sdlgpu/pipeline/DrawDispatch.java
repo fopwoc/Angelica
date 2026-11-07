@@ -1,5 +1,6 @@
 package com.gtnewhorizons.angelica.sdlgpu.pipeline;
 
+import com.gtnewhorizons.angelica.sdlgpu.diagnostic.FrameCounters;
 import com.gtnewhorizons.angelica.sdlgpu.device.Device;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
 import com.gtnewhorizons.angelica.sdlgpu.frame.FrameManager;
@@ -120,6 +121,7 @@ public final class DrawDispatch {
             full = null;
         }
         if (full == null) {
+            if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
             SDL_DrawGPUIndexedPrimitives(rp, count, instances, firstIndex, baseVertex, 0);
             return;
         }
@@ -128,6 +130,7 @@ public final class DrawDispatch {
         for (int i = 0; i < n; i++) {
             final int sCount = st.eboSplitCounts[i];
             if (sCount <= 0) continue;
+            if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
             SDL_DrawGPUIndexedPrimitives(rp, sCount, instances, firstIndex + st.eboSplitFirsts[i], baseVertex, 0);
         }
     }
@@ -187,6 +190,7 @@ public final class DrawDispatch {
         final int elementSize = use32bit ? SDL_GPU_INDEXELEMENTSIZE_32BIT : SDL_GPU_INDEXELEMENTSIZE_16BIT;
         final long rp = frameManager.getRenderPass();
         bindIndexBufferIfChanged(st, rp, st.fanIndexBuffer, elementSize, uploadOffset);
+        if (FrameCounters.ENABLED) FrameCounters.DRAWS.increment();
         SDL_DrawGPUIndexedPrimitives(rp, numTriangles * 3, 1, 0, 0, 0);
         return true;
     }
