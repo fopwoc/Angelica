@@ -73,6 +73,10 @@ public final class GlEventTrace {
         write("bind target=" + Integer.toHexString(target) + " fbo=" + framebuffer + " changed=" + changed);
     }
 
+    public static void clearColor(float red, float green, float blue, float alpha) {
+        write("clearColor " + red + "," + green + "," + blue + "," + alpha);
+    }
+
     public static void rasterizerDiscard(boolean enabled) {
         write("discard enabled=" + enabled);
     }
@@ -91,7 +95,7 @@ public final class GlEventTrace {
     private static String caller() {
         return STACK.walk(frames -> frames.filter(frame -> !frame.getClassName().startsWith(RENDERER_PACKAGE))
                 .limit(CALLER_DEPTH)
-                .map(frame -> frame.getClassName() + "." + frame.getMethodName())
+                .map(frame -> frame.getClassName() + "." + frame.getMethodName() + ":" + frame.getLineNumber())
                 .collect(Collectors.joining("<")));
     }
 }

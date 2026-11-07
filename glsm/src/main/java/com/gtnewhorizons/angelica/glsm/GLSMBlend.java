@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.glsm;
 
 import com.gtnewhorizons.angelica.glsm.DisplayListManager.RecordMode;
+import com.gtnewhorizons.angelica.glsm.diagnostic.GlEventTrace;
 import com.gtnewhorizons.angelica.glsm.hooks.DeferredBlendHandler;
 import com.gtnewhorizons.angelica.glsm.hooks.DeferredDepthColorHandler;
 import com.gtnewhorizons.angelica.glsm.hooks.GLSMConfig;
@@ -268,6 +269,7 @@ public final class GLSMBlend {
 
     public static void glClearColor(float red, float green, float blue, float alpha) {
         rejectExitCapture();
+        if (GlEventTrace.ENABLED) GlEventTrace.clearColor(red, green, blue, alpha);
         final GLContextState glCtx = ctx();
         final RecordMode mode = DisplayListManager.getRecordMode();
         if (mode != RecordMode.NONE) {
