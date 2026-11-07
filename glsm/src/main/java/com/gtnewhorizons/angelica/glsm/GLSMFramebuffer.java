@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.glsm;
 
 import com.gtnewhorizons.angelica.glsm.DisplayListManager.RecordMode;
+import com.gtnewhorizons.angelica.glsm.diagnostic.GlEventTrace;
 import com.gtnewhorizons.angelica.glsm.stacks.IntegerStateStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -65,6 +66,9 @@ public final class GLSMFramebuffer {
     public static void glClear(int mask) {
         rejectExitCapture();
         final RecordMode mode = DisplayListManager.getRecordMode();
+        if (GlEventTrace.ENABLED) {
+            GlEventTrace.clear(mask, ctx().drawFramebuffer, mode, ctx().rasterizerDiscard.isEnabled(), FeedbackManager.getRenderMode() != GL11.GL_RENDER);
+        }
         if (mode != RecordMode.NONE) {
             DisplayListManager.recordClear(mask);
             if (mode == RecordMode.COMPILE) {
@@ -153,6 +157,14 @@ public final class GLSMFramebuffer {
     public static void glBindFramebuffer(int target, int framebuffer) {
         rejectExitCapture();
         final GLContextState glCtx = ctx();
+        if (GlEventTrace.ENABLED) {
+            final boolean changed = switch (target) {
+                case GL30.GL_DRAW_FRAMEBUFFER -> glCtx.drawFramebuffer != framebuffer;
+                case GL30.GL_READ_FRAMEBUFFER -> glCtx.readFramebuffer != framebuffer;
+                default -> glCtx.drawFramebuffer != framebuffer || glCtx.readFramebuffer != framebuffer;
+            };
+            GlEventTrace.bindFramebuffer(target, framebuffer, changed);
+        }
         if (target == GL30.GL_FRAMEBUFFER) {
             if (glCtx.drawFramebuffer == framebuffer && glCtx.readFramebuffer == framebuffer) return;
             if (glCtx.drawFramebuffer != framebuffer) glCtx.drawFramebufferGeneration++;

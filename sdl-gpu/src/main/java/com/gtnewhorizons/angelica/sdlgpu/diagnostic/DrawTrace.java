@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL12.GL_TEXTURE_BASE_LEVEL;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 import com.gtnewhorizons.angelica.config.SystemProperties;
+import com.gtnewhorizons.angelica.glsm.diagnostic.GlEventTrace;
 import com.gtnewhorizons.angelica.sdlgpu.Subsystems;
 import com.gtnewhorizons.angelica.sdlgpu.Upstream;
 import com.gtnewhorizons.angelica.sdlgpu.frame.ContextState;
@@ -26,7 +27,7 @@ public final class DrawTrace implements AutoCloseable {
     // Checked before every draw; skips subsystem lookup when tracing is off for the whole process.
     private static final boolean GPU_DEBUG = SystemProperties.SDL_GPU_DEBUG;
     private static final ComputeCheckpoint CHECKPOINT = new ComputeCheckpoint(System.getProperty("angelica.debug.stopBeforeCompute", ""));
-    private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace") || CHECKPOINT.enabled();
+    private static final boolean REQUESTED = Boolean.getBoolean("julia.drawTrace") || CHECKPOINT.enabled() || GlEventTrace.ENABLED;
     // Frame index and two bounded content-addressed source paths accompany each snapshot.
     private static final int SOURCE_HEADER_BYTES = 256;
     private static final int CLEAR_LIMIT = 1024;
@@ -60,6 +61,7 @@ public final class DrawTrace implements AutoCloseable {
             writer.write("captureFrame=" + frame + "\n");
             writer.flush();
             compute = new ComputeTrace(output);
+            if (GlEventTrace.ENABLED) GlEventTrace.open(output.resolve("gl-events.txt"), frame);
         } catch (IOException failure) {
             throw new IllegalStateException("Cannot open draw trace", failure);
         }
@@ -68,6 +70,7 @@ public final class DrawTrace implements AutoCloseable {
     /** A request file restarts capture on the render thread after the scene has reached the state under investigation. */
     public void frameBoundary() {
         frame++;
+        if (GlEventTrace.ENABLED) GlEventTrace.frame(frame);
         if (output == null) return;
         try {
             try {
@@ -250,6 +253,7 @@ public final class DrawTrace implements AutoCloseable {
 
     @Override
     public void close() {
+        if (GlEventTrace.ENABLED) GlEventTrace.close();
         if (writer == null) return;
         try {
             if (compute != null) {

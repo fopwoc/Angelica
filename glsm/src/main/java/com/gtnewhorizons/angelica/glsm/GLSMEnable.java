@@ -1,6 +1,7 @@
 package com.gtnewhorizons.angelica.glsm;
 
 import com.gtnewhorizons.angelica.glsm.DisplayListManager.RecordMode;
+import com.gtnewhorizons.angelica.glsm.diagnostic.GlEventTrace;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
@@ -89,7 +90,10 @@ public final class GLSMEnable {
             case GL13.GL_SAMPLE_ALPHA_TO_COVERAGE -> glCtx.sampleAlphaToCoverageState.enable();
             case GL13.GL_SAMPLE_ALPHA_TO_ONE -> glCtx.sampleAlphaToOneState.enable();
             case GL13.GL_SAMPLE_COVERAGE -> glCtx.sampleCoverageState.enable();
-            case GL30.GL_RASTERIZER_DISCARD -> glCtx.rasterizerDiscard.enable();
+            case GL30.GL_RASTERIZER_DISCARD -> {
+                if (GlEventTrace.ENABLED) GlEventTrace.rasterizerDiscard(true);
+                glCtx.rasterizerDiscard.enable();
+            }
             case GL11.GL_SCISSOR_TEST -> GLSMRasterizer.enableScissorTest(glCtx);
             case GL11.GL_STENCIL_TEST -> glCtx.stencilTest.enable();
             case GL11.GL_TEXTURE_1D -> glCtx.textures.getTexture1DStates(glCtx.activeTextureUnit.getValue()).enable();
@@ -178,7 +182,10 @@ public final class GLSMEnable {
             case GL13.GL_SAMPLE_ALPHA_TO_COVERAGE -> glCtx.sampleAlphaToCoverageState.disable();
             case GL13.GL_SAMPLE_ALPHA_TO_ONE -> glCtx.sampleAlphaToOneState.disable();
             case GL13.GL_SAMPLE_COVERAGE -> glCtx.sampleCoverageState.disable();
-            case GL30.GL_RASTERIZER_DISCARD -> glCtx.rasterizerDiscard.disable();
+            case GL30.GL_RASTERIZER_DISCARD -> {
+                if (GlEventTrace.ENABLED) GlEventTrace.rasterizerDiscard(false);
+                glCtx.rasterizerDiscard.disable();
+            }
             case GL11.GL_SCISSOR_TEST -> GLSMRasterizer.disableScissorTest(glCtx);
             case GL11.GL_STENCIL_TEST -> glCtx.stencilTest.disable();
             case GL11.GL_TEXTURE_1D -> glCtx.textures.getTexture1DStates(glCtx.activeTextureUnit.getValue()).disable();
